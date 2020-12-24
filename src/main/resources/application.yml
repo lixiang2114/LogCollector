@@ -1,0 +1,8 @@
+server.port: 8088
+
+spring:
+  profiles.active: test
+  application.name: LogCollector
+
+logging.maxFileSize: 100MB
+logging.basePkg: com.github.lixiang2114.etllog
