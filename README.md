@@ -211,7 +211,7 @@ emqx.filterName=defaultLogFilter
 emqx.protocolType=tcp
 ```
 ##### 备注：  
-相对于在线实时传送而言，只需要将realTime参数改成false即可，其它参数保持不变  
+相对于离线批量传送而言，只需要将realTime参数改成false即可，其它参数保持不变  
       
 + 配置日志上下文  
 ```Text
@@ -221,7 +221,7 @@ logger.manualLineNumber=0
 logger.manualByteNumber=0
 ```
 ##### 备注：  
-相对于在线实时传送而言，离线传送日志的配置很简单，只需要指定传送的日志文件和检查点即可  
+相对于离线批量传送而言，离线传送日志的配置很简单，只需要指定传送的日志文件和检查点即可  
       
 + 配置过滤器上下文  
 ```Text
@@ -235,7 +235,7 @@ topic=Topic_Test
 tokenExpire=-1
 ```
 ##### 备注：  
-相对于在线实时传送而言，过滤器的配置没有任何变化，因为这些参数实际上是MQTT的连接参数，不论是实时传送还是离线传送，这些参数都是需要的  
+相对于离线批量传送而言，过滤器的配置没有任何变化，因为这些参数实际上是MQTT的连接参数，不论是实时传送还是离线传送，这些参数都是需要的  
       
 + 启动日志日志收集器服务  
 bash /software/LogCollector/bin/startup.sh  
