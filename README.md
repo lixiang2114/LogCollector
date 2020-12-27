@@ -35,11 +35,11 @@ emqx.batchSize=100
 |-----|-------|-----|----------|-------|
 |context.realTime|boolean|true|可选|是否实时传送模式启动服务|
 |context.initOnStart|boolean|true|可选|是否在启动服务时初始化配置参数|
-|emqx.persistenceType|MqttClientPersistence|MemoryPersistence|是|MQTT消息持久化类型|
-|emqx.hostList|string|192.168.162.127:1883|是|MQTT服务器连接地址表,多个地址之间使用英文逗号","分隔|
-|emqx.filterName|string|filter|是|过滤器配置文件名称(不含后缀扩展名)|
-|emqx.protocolType|string|tcp|是|连接MQTT服务器使用的传输层协议,目前仅支持TCP协议|
-|emqx.batchSize|integer|100|是|推送数据到MQTT服务器的批处理尺寸|
+|emqx.persistenceType|MqttClientPersistence|MemoryPersistence|可选|MQTT消息持久化类型|
+|emqx.hostList|string|192.168.162.127:1883|可选|MQTT服务器连接地址表,多个地址之间使用英文逗号","分隔|
+|emqx.filterName|string|filter|可选|过滤器配置文件名称(不含后缀扩展名)|
+|emqx.protocolType|string|tcp|可选|连接MQTT服务器使用的传输层协议,目前仅支持TCP协议|
+|emqx.batchSize|integer|100|可选|推送数据到MQTT服务器的批处理尺寸|
 ​      
 2. 配置日志上下文  
 ```Text
@@ -151,7 +151,7 @@ tokenExpire=-1
 ##### 备注：  
 如果MQTT服务端开启了Token访问认证，那么jwtSecret参数必须在日志收集器与MQTT服务端进行统一，否则认证无法通过，其次topic参数必须在日志收集器与MQTT消费者端进行统一，否则无法通过MQTT传递日志信息，最后如果tokenExpire参数值保持默认值-1则表示Token永不过期，此时日志收集器服务启动后将不再拉起Token调度池线程  
       
-+ 启动日志日志收集器服务  
++ 启动日志收集器服务  
 bash /software/LogCollector/bin/startup.sh  
 ```Text
 17:49:11.715 [main] DEBUG org.springframework.beans.factory.config.YamlPropertiesFactoryBean - Merging document (no matchers set): {server.port=8088, spring={profiles.active=test, application.name=LogCollector}, logging.maxFileSize=100MB, logging.basePkg=com.github.lixiang2114.etllog}
@@ -194,7 +194,7 @@ INFO: start transfer Save process....
 日志收集器服务一旦启动之后，就自动开始收集本地应用端日志并将其推送到指定的MQTT服务器了，可以通过日志收集器运维管理侧的接口来控制ETL流程、转存流程、Token调度流程等的启停，甚至可以在运行时动态变更配置收集器各项参数等  
 &#8203;
     
-+ 停止日志日志收集器服务  
++ 停止日志收集器服务  
 Windows端可以直接在收集器本地按下Ctrl+C平滑终止服务，Linux端可以直接执行pkill java命令来平滑终止服务，最后，不论是Windows端还是Linux端都可以直接发送以下命令来平滑终止收集器服务进程：    
 curl -ik -X GET http://127.0.0.1:8088/admin/shutdown  
 $#8203;  
@@ -237,7 +237,7 @@ tokenExpire=-1
 ##### 备注：  
 相对于离线批量传送而言，过滤器的配置没有任何变化，因为这些参数实际上是MQTT的连接参数，不论是实时传送还是离线传送，这些参数都是需要的  
       
-+ 启动日志日志收集器服务  
++ 启动日志收集器服务  
 bash /software/LogCollector/bin/startup.sh  
 ```Text
 17:49:11.715 [main] DEBUG org.springframework.beans.factory.config.YamlPropertiesFactoryBean - Merging document (no matchers set): {server.port=8088, spring={profiles.active=test, application.name=LogCollector}, logging.maxFileSize=100MB, logging.basePkg=com.github.lixiang2114.etllog}
@@ -284,5 +284,5 @@ Server is Stopped...
 对于离线传送而言，日志收集器并非是启动一个服务来连续运行，而是将离线日志批量传送完成后自动退出服务进程，从这个意义上来讲，日志收集器更像是一个日志ETL工具  
 &#8203;
     
-+ 停止日志日志收集器服务  
++ 停止日志收集器服务  
 对于离线传送而言，日志传送完毕后将自动关闭收集器进程，所以我们无需手动关闭它  
