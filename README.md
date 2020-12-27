@@ -36,7 +36,7 @@ emqx.batchSize=100
 |context.realTime|boolean|true|可选|是否实时传送模式启动服务|
 |context.initOnStart|boolean|true|可选|是否在启动服务时初始化配置参数|
 |emqx.persistenceType|MqttClientPersistence|MemoryPersistence|可选|MQTT消息持久化类型|
-|emqx.hostList|string|192.168.162.127:1883|可选|MQTT服务器连接地址表,多个地址之间使用英文逗号","分隔|
+|emqx.hostList|string|127.0.0.1:1883|可选|MQTT服务器连接地址表,多个地址之间使用英文逗号","分隔|
 |emqx.filterName|string|filter|可选|过滤器配置文件名称(不含后缀扩展名)|
 |emqx.protocolType|string|tcp|可选|连接MQTT服务器使用的传输层协议,目前仅支持TCP协议|
 |emqx.batchSize|integer|100|可选|推送数据到MQTT服务器的批处理尺寸|
