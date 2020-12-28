@@ -8,6 +8,9 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.OutputStreamWriter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.lixiang2114.etllog.context.ContextConfig;
 
 /**
@@ -19,6 +22,11 @@ public class TransferSaveHandler implements Runnable{
 	 * 命令字符串
 	 */
 	private String command;
+	
+	/**
+	 * 日志工具
+	 */
+	private static final Logger log=LoggerFactory.getLogger(TransferSaveHandler.class);
 	
 	public TransferSaveHandler(String command){
 		this.command=command;
@@ -56,7 +64,7 @@ public class TransferSaveHandler implements Runnable{
 					String curTransSaveFilePath=ContextConfig.transferSaveFile.getAbsolutePath();
 					int lastIndex=curTransSaveFilePath.lastIndexOf(".");
 					ContextConfig.transferSaveFile=new File(curTransSaveFilePath.substring(0,lastIndex+1)+(Integer.parseInt(curTransSaveFilePath.substring(lastIndex+1))+1));
-					
+					log.info("TransferSaveHandler switch transfer save log file to: "+ContextConfig.transferSaveFile.getAbsolutePath());
 					bw.close();
 					break;
 				}

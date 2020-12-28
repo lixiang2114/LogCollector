@@ -6,6 +6,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.lixiang2114.etllog.util.TokenUtil;
 
@@ -22,6 +24,11 @@ public class TokenExpireHandler {
 	 * Token过期事件调度池
 	 */
 	private static ScheduledExecutorService tokenExpireService;
+	
+	/**
+	 * 日志工具
+	 */
+	private static final Logger log=LoggerFactory.getLogger(TokenExpireHandler.class);
 	
 	public static void startTokenScheduler(MqttConnectOptions mqttConnectOptions,boolean tokenFromPass){
 		tokenExpireService = Executors.newSingleThreadScheduledExecutor();
@@ -51,5 +58,6 @@ public class TokenExpireHandler {
 		 if (future != null) future.cancel(true);
 		 if (null == tokenExpireService) return;
 		 tokenExpireService.shutdownNow();
+		 log.info("token scheduler is stopping...");
 	}
 }

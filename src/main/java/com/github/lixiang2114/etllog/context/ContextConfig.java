@@ -20,7 +20,10 @@ import org.eclipse.paho.client.mqttv3.MqttClientPersistence;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.github.lixiang2114.etllog.util.ApplicationUtil;
 import com.github.lixiang2114.etllog.util.ClassLoaderUtil;
 import com.github.lixiang2114.etllog.util.CommonUtil;
 import com.github.lixiang2114.etllog.util.PropertiesReader;
@@ -203,6 +206,11 @@ public class ContextConfig {
 	public static final Pattern NUMBER_REGEX=Pattern.compile("^[0-9]+$");
 	
 	/**
+	 * 日志工具
+	 */
+	private static final Logger log=LoggerFactory.getLogger(ContextConfig.class);
+	
+	/**
      * IP地址正则式
      */
 	public static final Pattern IP_REGEX=Pattern.compile("^\\d+\\.\\d+\\.\\d+\\.\\d+$");
@@ -254,37 +262,57 @@ public class ContextConfig {
 		//应用方日志文件
 		appLogFile=loggerConfig.getProperty("logger.appLogFile");
 		
+		//默认实时缓冲日志文件
+		File bufferLogFile=new File(ApplicationUtil.getValue("projectFile",File.class),"tmp/transfer.log.0");
+		
 		//转存应用方的日志文件
 		String transferSaveFileName=loggerConfig.getProperty("logger.transferSaveFile");
-		if(null!=transferSaveFileName && 0!=transferSaveFileName.trim().length()) {
+		if(null==transferSaveFileName || 0==transferSaveFileName.trim().length()) {
+			transferSaveFile=bufferLogFile;
+			log.warn("not found parameter: 'logger.transferSaveFile',will be use default...");
+		}else{
 			File file=new File(transferSaveFileName.trim());
 			if(file.exists() && file.isFile()) transferSaveFile=file;
 		}
 		
+		log.info("transfer save logger file is: "+transferSaveFile.getAbsolutePath());
+		
 		//转存日志文件最大尺寸
 		transferSaveMaxSize=getTransferSaveMaxSize(loggerConfig);
+		log.info("transfer save logger file max size is: "+transferSaveMaxSize);
 		
 		//实时自动推送的日志文件
 		String loggerFileName=loggerConfig.getProperty("logger.loggerFile");
-		if(null!=loggerFileName && 0!=loggerFileName.trim().length()) {
+		if(null==loggerFileName || 0==loggerFileName.trim().length()) {
+			loggerFile=bufferLogFile;
+			log.warn("not found parameter: 'logger.loggerFile',will be use default...");
+		}else{
 			File file=new File(loggerFileName.trim());
 			if(file.exists() && file.isFile()) loggerFile=file;
 		}
 		
+		log.info("realTime logger file is: "+loggerFile.getAbsolutePath());
+		
 		//实时自动推送的日志文件检查点
 		lineNumber=Integer.parseInt(loggerConfig.getProperty("logger.lineNumber","0"));
+		log.info("lineNumber is: "+lineNumber);
 		byteNumber=Integer.parseInt(loggerConfig.getProperty("logger.byteNumber","0"));
+		log.info("byteNumber is: "+byteNumber);
 		
 		//离线手动推送的日志文件
 		String manualFileName=loggerConfig.getProperty("logger.manualLoggerFile");
-		if(null!=manualFileName && 0!=manualFileName.trim().length()) {
+		if(null==manualFileName || 0==manualFileName.trim().length()) {
+			log.warn("not found parameter: 'logger.manualLoggerFile',can not use offline send with manual...");
+		}else{
 			File file=new File(manualFileName.trim());
 			if(file.exists() && file.isFile()) manualLoggerFile=file;
 		}
 		
 		//离线手动推送的日志文件检查点
 		manualLineNumber=Integer.parseInt(loggerConfig.getProperty("logger.manualLineNumber","0"));
+		log.info("manualLineNumber is: "+manualLineNumber);
 		manualByteNumber=Integer.parseInt(loggerConfig.getProperty("logger.manualByteNumber","0"));
+		log.info("manualByteNumber is: "+manualByteNumber);
 	}
 	
 	/**
@@ -307,19 +335,21 @@ public class ContextConfig {
 			String filterClass=(String)filterConfig.remove("type");
 			if(null==filterClass || 0==filterClass.trim().length()){
 				filterClass=DEFAULT_FILTER;
-				System.out.println("WARN:filterName=="+filterName+" the filter is empty or not found, the default filter will be used...");
+				log.warn("filterName=="+filterName+" the filter is empty or not found, the default filter will be used...");
 			}
-			System.out.println("INFO:====load filter class file:"+filterClass);
+			log.info("load filter class file:"+filterClass);
 			filterType=Class.forName(filterClass);
 		} catch (ClassNotFoundException e) {
+			log.error("load filter class failure,cause is:",e);
 			throw new RuntimeException(e);
 		}
 		
 		//创建过滤器对象
 		try {
 			filterObject=filterType.newInstance();
-		} catch (InstantiationException | IllegalAccessException e1) {
-			throw new RuntimeException("Error:filter object instance failure!!!");
+		} catch (InstantiationException | IllegalAccessException e) {
+			log.error("filter object instance failure,cause is:",e);
+			throw new RuntimeException(e);
 		}
 		
 		//自动初始化过滤器参数
@@ -327,26 +357,26 @@ public class ContextConfig {
 			initFilter(filterType);
 			System.out.println("INFO: auto initialized filter parameter complete!");
 		} catch (ClassNotFoundException | IOException e) {
-			System.out.println("Warn: "+filterType.getName()+" may not be auto initialized:filterConfig");
+			log.warn(filterType.getName()+" may not be auto initialized:filterConfig");
 		}
 		
 		//回调初始化过滤器参数
 		try {
 			Method filterConfig = filterType.getDeclaredMethod("filterConfig",Properties.class);
 			if(null!=filterConfig) filterConfig.invoke(filterObject, filterConfig);
-			System.out.println("INFO: callback initialized filter parameter complete!");
+			log.info("callback initialized filter parameter complete!");
 		} catch (Exception e) {
-			System.out.println("Warn: "+filterType.getName()+" may not be manual initialized:filterConfig");
+			log.warn(filterType.getName()+" may not be manual initialized:filterConfig");
 		}
 		
 		//获取上下文参数3:Emqx主机地址
 		initHostAddress();
 		if(null==hostList) throw new RuntimeException("Error:host address can not be NULL or EMPTY!!!");
-		System.out.println("INFO: emqx host address initialized complete:"+hostList);
+		log.info("emqx host address initialized complete:"+hostList);
 		
 		//获取上下文参数4:Mqtt主机连接参数
 		initMqttClientOptions(filterType);
-		System.out.println("INFO: emqx host connection initialized complete: URLS: "+Arrays.toString(mqttConnectOptions.getServerURIs())+" tokenFromPass: "
+		log.info("emqx host connection initialized complete: URLS: "+Arrays.toString(mqttConnectOptions.getServerURIs())+" tokenFromPass: "
 		+tokenFromPass+" useName:"+mqttConnectOptions.getUserName()+" passWord: "+new String(mqttConnectOptions.getPassword()));
 		
 		//初始化过滤器对象与接口表
@@ -414,7 +444,7 @@ public class ContextConfig {
 		try{
 			jwtSecret=(String)filterType.getDeclaredMethod("getJwtsecret").invoke(filterObject);
 		}catch(Exception e){
-			System.out.println("Warn:===jwt secret information not found...");
+			log.warn("jwt secret information not found...");
 		}
 		
 		String userName=null;
@@ -423,7 +453,7 @@ public class ContextConfig {
 			userName=(String)filterType.getDeclaredMethod("getUsername").invoke(filterObject);
 			passWord=(String)filterType.getDeclaredMethod("getPassword").invoke(filterObject);
 		}catch(Exception e){
-			System.out.println("Warn:===username or password information not found...");
+			log.warn("username or password information not found...");
 		}
 		
 		passWord=null==passWord||0==passWord.trim().length()?"public":passWord.trim();
@@ -434,14 +464,14 @@ public class ContextConfig {
 			try{
 				tokenExpire=(Integer)filterType.getDeclaredMethod("getTokenexpire").invoke(filterObject);
 			}catch(Exception e){
-				System.out.println("Warn:===token expire information not found...");
+				log.warn("token expire information not found...");
 			}
 			
 			Integer expireFactor=null;
 			try{
 				expireFactor=(Integer)filterType.getDeclaredMethod("getExpirefactor").invoke(filterObject);
 			}catch(Exception e){
-				System.out.println("Warn:===expire factor information not found...");
+				log.warn("expire factor information not found...");
 			}
 			
 			if(null==tokenExpire) tokenExpire=3600;
@@ -466,7 +496,7 @@ public class ContextConfig {
 			try{
 				tokenFromField=(String)filterType.getDeclaredMethod("getTokenfrom").invoke(filterObject);
 			}catch(Exception e){
-				System.out.println("Warn:===token field name is unknow,default use password...");
+				log.warn("token field name is unknow,default use password...");
 			}
 			
 			if(null==tokenFromField) tokenFromField="password";
@@ -490,7 +520,7 @@ public class ContextConfig {
 			persistence=(MqttClientPersistence)Class.forName(persistenceType).newInstance();
 		} catch (Exception e) {
 			persistence=new MemoryPersistence();
-			System.out.println("WARN:==="+persistenceType+" is not be found,default use MemoryPersistence...");
+			log.warn(persistenceType+" is not be found,default use MemoryPersistence...");
 		}
 	}
 	
@@ -504,6 +534,7 @@ public class ContextConfig {
 			topic=tmpTopic.trim();
 			if(0==topic.length()) throw new RuntimeException("topic can not be EMPTY!!!");
 		}catch(Exception e){
+			log.error("get topic occur error,cause is:",e);
 			throw new RuntimeException(e);
 		}
 		
@@ -511,30 +542,31 @@ public class ContextConfig {
 			qos=(Integer)filterType.getDeclaredMethod("getQos").invoke(filterObject);
 			if(null==qos) qos=1;
 		}catch(Exception e){
-			System.out.println("WARN:===getQoses method can not be found,use default Qos=1...");
+			qos=1;
+			log.warn("getQoses method can not be found,use default Qos=1...");
 		}
 		
 		try{
 			retained=(Boolean)filterType.getDeclaredMethod("getRetained").invoke(filterObject);
 			if(null==retained) retained=false;
 		}catch(Exception e){
-			System.out.println("WARN:===getQoses method can not be found,use default Qos=1...");
+			retained=false;
+			log.warn("getRetained method can not be found,use default retained=false...");
 		}
 		
 		 try {
 			doFilter=filterType.getDeclaredMethod("doFilter",String.class);
 		} catch (NoSuchMethodException | SecurityException e) {
-			throw new RuntimeException(e);
+			log.warn("doFilter method can not be found,will not be invoke filter method...");
 		}
 		 
-		if(null==doFilter) new RuntimeException("ERROR:===doFilter method can not be found....");
-		
 		try {
 			String clientId=MqttClient.generateClientId();
 			mqttClient=new MqttClient(mqttConnectOptions.getServerURIs()[0],clientId,persistence);
 			IMqttToken mqttToken=mqttClient.connectWithResult(mqttConnectOptions);
 			mqttToken.waitForCompletion();
 		} catch (MqttException e) {
+			log.error("connection Mqtt server occur error,cause is:",e);
 			 throw new RuntimeException(e);
 		}
 	}
@@ -610,7 +642,7 @@ public class ContextConfig {
 		OutputStream fos=null;
 		try{
 			fos=new FileOutputStream(ClassLoaderUtil.getRealFile("logger.properties"));
-			System.out.println("INFO: reflesh checkpoint...");
+			log.info("reflesh checkpoint...");
 			loggerConfig.store(fos, "reflesh checkpoint");
 		}finally{
 			if(null!=fos) fos.close();
@@ -660,10 +692,10 @@ public class ContextConfig {
 		map.put("filterType", filterObject.getClass().getName());
 		map.put("expireFactor", filterConfig.get("expireFactor"));
 		map.put("persistence", persistence.getClass().getName());
-		map.put("passWord", mqttConnectOptions.getPassword());
 		map.put("userName", mqttConnectOptions.getUserName());
 		map.put("maxInflight", mqttConnectOptions.getMaxInflight());
 		map.put("isCleanSession", mqttConnectOptions.isCleanSession());
+		map.put("passWord", new String(mqttConnectOptions.getPassword()));
 		map.put("keepAliveInterval", mqttConnectOptions.getKeepAliveInterval());
 		map.put("connectionTimeout", mqttConnectOptions.getConnectionTimeout());
 		map.put("automaticReconnect", mqttConnectOptions.isAutomaticReconnect());

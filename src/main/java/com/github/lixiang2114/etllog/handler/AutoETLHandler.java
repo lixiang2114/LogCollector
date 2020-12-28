@@ -74,7 +74,13 @@ public class AutoETLHandler implements Runnable{
 					String record=line.trim();
 					if(0==record.length()) continue;
 					
-					String[] rows=(String[])ContextConfig.doFilter.invoke(ContextConfig.filterObject, record);
+					String[] rows=null;
+					if(null==ContextConfig.doFilter){
+						rows=new String[]{record};
+					}else{
+						rows=(String[])ContextConfig.doFilter.invoke(ContextConfig.filterObject, record);
+					}
+					
 					if(null==rows || 0==rows.length) continue;
 					
 					String msg=null;
@@ -96,7 +102,7 @@ public class AutoETLHandler implements Runnable{
 								times++;
 								loop=true;
 								Thread.sleep(2000L);
-								System.out.println("Error:===publish occur excepton: "+e.getMessage());
+								log.error("publish occur excepton: "+e.getMessage());
 							}
 						}while(loop && times<3);
 						

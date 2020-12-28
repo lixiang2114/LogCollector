@@ -6,6 +6,8 @@ import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
 
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.lixiang2114.etllog.context.ContextConfig;
 
@@ -15,6 +17,11 @@ import com.github.lixiang2114.etllog.context.ContextConfig;
  * @param <T>
  */
 public class ManualETLHandler {
+	/**
+	 * 日志工具
+	 */
+	private static final Logger log=LoggerFactory.getLogger(ManualETLHandler.class);
+	
 	/**
 	 * 离线发送消息打Emqx
 	 * @param manualLogFile 日志文件
@@ -34,7 +41,13 @@ public class ManualETLHandler {
 				String record=line.trim();
 				if(0==record.length()) continue;
 				
-				String[] rows=(String[])ContextConfig.doFilter.invoke(ContextConfig.filterObject, record);
+				String[] rows=null;
+				if(null==ContextConfig.doFilter) {
+					rows=new String[]{record};
+				}else{
+					rows=(String[])ContextConfig.doFilter.invoke(ContextConfig.filterObject, record);
+				}
+				
 				if(null==rows || 0==rows.length) continue;
 				
 				String msg=null;
@@ -56,7 +69,7 @@ public class ManualETLHandler {
 							times++;
 							loop=true;
 							Thread.sleep(2000L);
-							System.out.println("Error:===publish occur excepton: "+e.getMessage());
+							log.error("publish occur excepton: "+e.getMessage());
 						}
 					}while(loop && times<3);
 					if(loop) break out;

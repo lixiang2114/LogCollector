@@ -8,9 +8,9 @@
 	<springProperty scope="context" name="appName" source="spring.application.name"/>
 	<springProperty scope="context" name="insIp" source="spring.cloud.client.ip-address"/>
 	
-	<property name="insId" value="${insIp}:${insPort}"/>
-	<property name="consolePattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{100}%msg%n"/>
-	<property name="filePattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level ${appName} ${insId} %logger{100}%msg%n"/>
+	<property name="insId" value="${insPort}"/>
+	<property name="consolePattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{100}: %msg%n"/>
+	<property name="filePattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level ${appName} ${insId} %logger{100}: %msg%n"/>
 	
 	<!-- 应用服务名 -->
 	<contextName>${appName}</contextName>

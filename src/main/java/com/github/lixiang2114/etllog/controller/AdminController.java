@@ -29,6 +29,7 @@ public class AdminController {
 	@PostConstruct
 	public void init(){
 		File projectFile=ApplicationUtil.getProjectPath();
+		ApplicationUtil.setValue("projectFile", projectFile);
 		ClassLoaderUtil.addFileToCurrentClassPath(new File(projectFile,"extra"));
 		ClassLoaderUtil.addFileToCurrentClassPath(new File(projectFile,"conf"));
 		ClassLoaderUtil.addFileToCurrentClassPath(new File(projectFile,"filter"));

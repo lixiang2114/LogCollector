@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.github.lixiang2114.etllog.context.ContextConfig;
@@ -23,13 +25,22 @@ import com.github.lixiang2114.etllog.util.CommonUtil;
 @Service("logService")
 @SuppressWarnings("unchecked")
 public class LogServiceImpl implements LogService{
+	/**
+	 * 日志工具
+	 */
+	private static final Logger log=LoggerFactory.getLogger(LogServiceImpl.class);
+	
 	@Override
 	public String startETL() {
-		if(null==ContextConfig.transferSaveFile) return "start ETL process failture,logger file not be specified!";
+		if(null==ContextConfig.transferSaveFile) {
+			log.error("start ETL process failture,logger file not be specified!");
+			return "start ETL process failture,logger file not be specified!";
+		}
 		
 		ContextConfig.isStartETL=true;
 		GracefulShutdownJVM.taskExecutor=SpringThreadPool.getSpringThreadPool();
 		GracefulShutdownJVM.logFuture=GracefulShutdownJVM.taskExecutor.submit(new AutoETLHandler());
+		log.info("ETL process has already started...");
 		
 		return "start ETL process complete!";
 	}
@@ -37,6 +48,7 @@ public class LogServiceImpl implements LogService{
 	@Override
 	public String stopETL() {
 		ContextConfig.isStartETL=false;
+		log.info("stop ETL process...");
 		return "stop ETL process complete!";
 	}
 
@@ -52,23 +64,27 @@ public class LogServiceImpl implements LogService{
 	@Override
 	public String reloadEmqxConfig() {
 		ContextConfig.reloadEmqxConfig();
+		log.info("reload emqx config complete!");
 		return "reload emqx config complete!";
 	}
 
 	@Override
 	public String reloadLoggerConfig() {
 		ContextConfig.reloadLoggerConfig();
+		log.info("reload logger config complete!");
 		return "reload logger config complete!";
 	}
 
 	@Override
 	public String startTokenScheduler() {
-		if(null!=ContextConfig.startTokenScheduler && ContextConfig.startTokenScheduler){
-			TokenExpireHandler.startTokenScheduler(ContextConfig.mqttConnectOptions, ContextConfig.tokenFromPass);
-			return "start scheduler complete!";
-		}else{
+		if(null==ContextConfig.startTokenScheduler || !ContextConfig.startTokenScheduler){
+			log.warn("token expire is -1,no need to start the scheduler!");
 			return "token expire is -1,no need to start the scheduler!";
 		}
+		
+		TokenExpireHandler.startTokenScheduler(ContextConfig.mqttConnectOptions, ContextConfig.tokenFromPass);
+		log.info("start scheduler complete!");
+		return "start scheduler complete!";
 	}
 
 	@Override
@@ -78,8 +94,10 @@ public class LogServiceImpl implements LogService{
 			ContextConfig.startTokenScheduler=false;
 			ContextConfig.mqttClient.disconnectForcibly();
 			ContextConfig.mqttClient.close(true);
+			log.info("stop scheduler complete!");
 			return "stop scheduler complete!";
 		}catch(MqttException e){
+			log.error("stop scheduler failure,cause:",e);
 			return "stop scheduler failure,cause:"+e.getMessage();
 		}
 	}
@@ -93,9 +111,12 @@ public class LogServiceImpl implements LogService{
 			command="tail -F "+ContextConfig.appLogFile;
 		}
 		
+		log.info("tailf cmmand is: "+command);
+		
 		ContextConfig.isStartTransSave=true;
 		GracefulShutdownJVM.taskExecutor=SpringThreadPool.getSpringThreadPool();
 		GracefulShutdownJVM.taskExecutor.submit(new TransferSaveHandler(command));
+		log.info("start logger transfer save process complete!");
 		
 		return "start logger transfer save process complete!";
 	}
@@ -103,6 +124,7 @@ public class LogServiceImpl implements LogService{
 	@Override
 	public String stopLogTransferSave() {
 		ContextConfig.isStartTransSave=false;
+		log.info("stop logger transfer save process complete!");
 		return "stop logger transfer save process complete!";
 	}
 
@@ -113,18 +135,22 @@ public class LogServiceImpl implements LogService{
 		}else{
 			ManualETLHandler.sendToEmqx(new File(logFileName.trim()));
 		}
+		
+		log.info("send offline log complete!");
 		return "send offline log complete!";
 	}
 
 	@Override
 	public String initEmqxConfig() {
 		ContextConfig.initEmqxConfig();
+		log.info("init emqx config complete!");
 		return "init emqx config complete!";
 	}
 
 	@Override
 	public String initLoggerConfig() {
 		ContextConfig.initLoggerConfig();
+		log.info("init logger config complete!");
 		return "init logger config complete!";
 	}
 
@@ -133,10 +159,11 @@ public class LogServiceImpl implements LogService{
 		try {
 			ContextConfig.refreshCheckPoint();
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("refresh transfer logfile checkPoint failure,cause is:",e);
 			return "Error: refresh transfer logfile checkPoint failure!";
 		}
-		return "Error: refresh transfer logfile checkPoint success!";
+		log.info("refresh transfer logfile checkPoint success!");
+		return "refresh transfer logfile checkPoint success!";
 	}
 	
 	@Override
@@ -146,10 +173,10 @@ public class LogServiceImpl implements LogService{
 			field.setAccessible(true);
 			return field.get(ContextConfig.class);
 		} catch (NoSuchFieldException e) {
-			e.printStackTrace();
+			log.error("not find field for "+key+" in ContextConfig,cause is: ",e);
 			return "Error: not find field for "+key+" in ContextConfig";
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("get parameter value occur error,cause is: ",e);
 			return "Error: "+e.getMessage();
 		}
 	}
@@ -167,16 +194,17 @@ public class LogServiceImpl implements LogService{
 			}
 			return "set param: "+key+"="+value+" success!";
 		} catch (NoSuchFieldException e) {
-			e.printStackTrace();
+			log.error("not find field for "+key+" in ContextConfig ",e);
 			return "Error: not find field for "+key+" in ContextConfig";
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("set parameter value occur error,cause is: ",e);
 			return "Error: "+e.getMessage();
 		}
 	}
 
 	@Override
 	public String dumpParamConfig() {
+		log.info("dump all config parameter...");
 		return ContextConfig.collectRealtimeParams();
 	}
 }
