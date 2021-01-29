@@ -197,21 +197,43 @@ public class AdminController {
 		return traService.stopAllTRAProcess();
 	}
 	
+	/**
+	 * 执行指定流程的ETL检查点
+	 * @param flowName 流程名称
+	 * @return 检查点提示信息
+	 * @throws Exception
+	 */
 	@RequestMapping(path="/etlcheckpoint")
     public Object etlCheckpoint(String flowName) throws Exception{
 		return etlService.refleshETLCheckpoint(flowName);
 	}
 	
+	/**
+	 * 执行所有流程的ETL检查点
+	 * @return 检查点提示信息
+	 * @throws Exception
+	 */
 	@RequestMapping(path="/etlcheckpointall")
     public Object etlCheckpointAll() throws Exception{
 		return etlService.refleshAllETLCheckpoint();
 	}
 	
+	/**
+	 * 执行指定流程的TRA检查点
+	 * @param flowName 流程名称
+	 * @return 检查点提示信息
+	 * @throws Exception
+	 */
 	@RequestMapping(path="/tracheckpoint")
     public Object traCheckpoint(String flowName) throws Exception{
 		return traService.refleshTRACheckpoint(flowName);
 	}
 	
+	/**
+	 * 执行所有流程的TRA检查点
+	 * @return 检查点提示信息
+	 * @throws Exception
+	 */
 	@RequestMapping(path="/tracheckpointall")
     public Object traCheckpointAll() throws Exception{
 		return traService.refleshAllTRACheckpoint();
