@@ -240,6 +240,23 @@ public class AdminController {
 	}
 	
 	/**
+	 * 显示指定插件的参数状态信息
+	 * @param flowname 流程名称
+	 * @param plugintype 插件类型
+	 * @param name 参数名
+	 * @param value 参数值
+	 * @return 参数状态信息
+	 * @throws Exception
+	 */
+	@RequestMapping(path="/{flowname}/{plugintype}")
+    public Object status(@PathVariable("flowname") String flowname,@PathVariable("plugintype") String plugintype,String name,String value) throws Exception{
+		if(null==name && null==value) return BaseService.status(flowname, PluginType.valueOf(plugintype));
+		if(null!=name && null==value) return BaseService.status(flowname, PluginType.valueOf(plugintype),name.trim());
+		if(null!=name && null!=value) return BaseService.status(flowname, PluginType.valueOf(plugintype),name.trim(),value.trim());
+		return null;
+	}
+	
+	/**
 	 * 通用透传服务接口
 	 * @param flowname 流程名称
 	 * @param plugintype 插件类型名

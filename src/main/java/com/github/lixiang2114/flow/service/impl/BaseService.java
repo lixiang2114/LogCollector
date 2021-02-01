@@ -29,17 +29,6 @@ public abstract class BaseService {
 	private static final Logger log=LoggerFactory.getLogger(ETLServiceImpl.class);
 	
 	/**
-	 * 指定的流程是否包含转存流程
-	 * @param flowName 流程名称
-	 * @return 是否包含转存流程
-	 */
-	public static final boolean containTransfer(String flowName) {
-		Flow flow=Context.getFlow(flowName);
-		if(null==flow) return false;
-		return flow.hasTransfer;
-	}
-	
-	/**
 	 * 确保指定的流程已经被装载
 	 * @param flowName 流程名称
 	 * @return 流程是否被装载
@@ -52,6 +41,24 @@ public abstract class BaseService {
 			log.error("load flow: "+flowName+" occur error",e);
 		}
 		return Context.hasFlow(flowName);
+	}
+	
+	/**
+	 * 获取插件状态(参数信息)
+	 * @param flowName 流程名称
+	 * @param pluginType 插件类型名
+	 * @param params 参数值列表
+	 * @return 插件调用结果
+	 */
+	public static final Object status(String flowName,PluginType pluginType,Object... params) {
+		Flow flow=Context.getFlow(flowName);
+		Plugin plugin=flow.getPlugin(pluginType);
+		try {
+			return plugin.callFace("config",params);
+		} catch (Exception e) {
+			log.error("call config face occur error: ",e);
+		}
+		return null;
 	}
 
 	/**

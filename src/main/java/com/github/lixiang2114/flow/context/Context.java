@@ -216,12 +216,9 @@ public class Context {
 		
 		Plugin transfer=null;
 		String transferName=flowConfig.getProperty(PluginType.transfer.name, "").trim();
-		if(!transferName.isEmpty()){
-			transfer=loadPlugin(transferName,PluginType.transfer,classLoader);
-		}
+		if(!transferName.isEmpty()) transfer=loadPlugin(transferName,PluginType.transfer,classLoader);
 		
 		Flow flow=new Flow(flowName,sink,filter,source,transfer,clearCache);
-		
 		flow.channelMaxSize=Integer.valueOf(flowConfig.getProperty("channelMaxSize", Default.CHANNEL_MAX_SIZE).trim());
 		flow.transferToSourceChannel=new Channel<Object>(flow.channelMaxSize);
 		flow.sourceToFilterChannel=new Channel<Object>(flow.channelMaxSize);

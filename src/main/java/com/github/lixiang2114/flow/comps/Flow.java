@@ -3,6 +3,7 @@ package com.github.lixiang2114.flow.comps;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentHashMap.KeySetView;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,6 +116,11 @@ public class Flow extends Comp{
 	 * 日志工具
 	 */
 	public static final Logger log=LoggerFactory.getLogger(Flow.class);
+	
+	/**
+	 * 上次发送失败的数据表
+	 */
+	public KeySetView<Object,Boolean> preFailSinkSet=ConcurrentHashMap.newKeySet();
 	
 	/**
 	 * 流程插件字典

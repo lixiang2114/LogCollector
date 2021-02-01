@@ -157,6 +157,8 @@ public class TRASchedulerPool extends SchedulerPool{
 			return true;
 		}
 		
+		if(0==traFutureDict.size()) return false;
+		
 		Context.traSchedulerStart=true;
 		traScheduerFuture=getTaskExecutor().submitListenable(new TRACaller(traFutureDict.values()));
 		log.info("flow scheduler start complete...");

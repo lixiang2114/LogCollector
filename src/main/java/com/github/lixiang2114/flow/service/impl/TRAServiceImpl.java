@@ -100,7 +100,7 @@ public class TRAServiceImpl extends BaseService implements TRAService{
 				e.printStackTrace();
 			}
 		}
-		return "refresh all ETL flows checkpoint complete...";
+		return "refresh all TRA flows checkpoint complete...";
 	}
 	
 	/**

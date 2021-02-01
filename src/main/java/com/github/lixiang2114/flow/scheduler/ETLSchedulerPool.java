@@ -154,6 +154,8 @@ public class ETLSchedulerPool extends SchedulerPool{
 			return true;
 		}
 		
+		if(0==etlFutureDict.size()) return false;
+		
 		Context.etlSchedulerStart=true;
 		etlScheduerFuture=getTaskExecutor().submitListenable(new ETLCaller(etlFutureDict.values()));
 		log.info("flow scheduler start complete...");

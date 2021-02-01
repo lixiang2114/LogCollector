@@ -2,7 +2,7 @@ package com.github.lixiang2114.flow.service;
 
 /**
  * @author Lixiang
- * @description 流程服务接口
+ * @description ETL流程服务接口
  */
 public interface ETLService {
 	/**
