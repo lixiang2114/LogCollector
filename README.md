@@ -8,7 +8,7 @@ LogCollector是基于应用日志流程的一套ETL工具和服务组件，同�
         
       
 ### 产品安装部署  
-1. 下载与安装
+1. 下载与安装  
 wget https://github.com/lixiang2114/Software/blob/main/LogCollector-2.0.zip -P /install/zip/    
 unzip /install/zip/LogCollector-2.0.zip -d /software/  
 ##### 备注：  
@@ -18,7 +18,7 @@ unzip /install/zip/LogCollector-2.0.zip -d /software/
 本产品是持续稳定更新的，本文档仅针对最新发布版本进行说明，历史版本将不再维护，但最新版本是稳定向前兼容的，历史版本所有功能均可用，从2.0版本开始，LogCollector仅针对框架本身的更新来更新文档，不再涉及任何插件说明文档，插件的使用说明文档由插件项目维护。  
 ​      
 
-2. 配置LogCollector
+2. 配置LogCollector  
 ```Shell
 vi /etc/profile
 LOGCOLLECTOR_HOME=/software/LogCollector-2.0
