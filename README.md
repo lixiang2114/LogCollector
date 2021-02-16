@@ -1,288 +1,501 @@
 ### 产品开发背景  
-LogCollector是基于应用日志到Mqtt服务器的一套ETL工具和服务组件。目前常用的ETL工具Flume也可以完成日志的采集、传输、转换和存储，但是Flume工具仅能应用到通信质量无障碍的局域网环境，在公网环境下可能因网络不稳定等因素导致连接远端服务的发送器组件失败，而此时收集器组件可能并不知情，数据仍然会继续传送到通道组件，这容易导致通道组件内存泄露从而引发OOM错误；另一方面由于通道错误导致实时收集的数据发送失败，收集器也没有记录实时检查点，这意味着发送失败的数据将面临丢失。发生所有这些问题的根源在于公网传递数据的不稳定性所致，因此Flume是一款仅能适用于云域内网的ETL工具。在这种问题背景的需求驱动下产生了LogCollector这款产品，LogCollector完全按照产品级标准使用JAVA语言进行开发，安装时无需再安装外置JDK支持，解压开箱即用。  
+LogCollector是基于应用日志流程的一套ETL工具和服务组件。目前常用的ETL工具Flume也可以完成日志的采集、传输、转换和存储，但是Flume工具仅能应用到通信质量无障碍的局域网环境，在公网环境下可能因网络不稳定等因素导致连接远端服务的发送器组件失败，而此时收集器组件可能并不知情，数据仍然会继续传送到通道组件，这容易导致通道组件内存泄露从而引发OOM错误；另一方面由于通道错误导致实时收集的数据发送失败，收集器也没有记录实时检查点，这意味着发送失败的数据将面临丢失。发生所有这些问题的根源在于公网传递数据的不稳定性所致，因此Flume是一款仅能适用于云域内网的ETL工具。在这种问题背景的需求驱动下产生了LogCollector这款产品，LogCollector完全按照产品级标准使用JAVA语言进行开发，安装时无需再安装外置JDK支持，解压开箱即用。  
 ​      
       
+
 ### 产品功能特性  
-LogCollector是一款基于应用方日志到Mqtt服务器的通用ETL传输工具，同时适用于云域内网数据传送和跨云数据传送；同时支持Windows和Linux双系统平台；同时支持实时传送、离线传送和断点续传；同时支持工具化、服务化、扩展化、集成化；收集器可一键安装部署，自动识别平台和系统环境并完成相应配置，无需任何附加操作，解压开箱即用。  
-   ​     
+LogCollector是基于应用日志流程的一套ETL工具和服务组件，同时适用于云域内网数据传送和跨云数据传送；同时支持Windows和Linux双系统平台；同时支持实时传送、离线传送和断点续传；同时支持工具化、服务化、扩展化、集成化；收集器可一键安装部署，自动识别平台和系统环境并完成相应配置，无需任何附加操作，解压开箱即用。  
+        
       
 ### 产品安装部署  
-1. 下载LogCollector-1.0  
-wget https://github.com/lixiang2114/Software/raw/main/LogCollector.zip
-​      
-2. 安装LogCollector-1.0  
-unzip LogCollector.zip -d /software/LogCollector  
-
+1. 下载与安装
+wget https://github.com/lixiang2114/Software/blob/main/LogCollector-2.0.zip -P /install/zip/    
+unzip /install/zip/LogCollector-2.0.zip -d /software/  
 ##### 备注：  
-本套产品支持在Windows系统上安装部署和使用，在Windows上的安装和Linux上的安装类同，都是解压即用模式，如：解压到D盘根目录可以执行： unzip LogCollector.zip -d  D:/software/LogCollector  
+本套产品支持在Windows系统上安装部署和使用，在Windows上的安装和Linux上的安装类同，都是解压即用模式，如：解压到D盘根目录可以执行： unzip LogCollector-2.0.zip -d  D:/software/  
 
+##### 特别声明:  
+本产品是持续稳定更新的，本文档仅针对最新发布版本进行说明，历史版本将不再维护，但最新版本是稳定向前兼容的，历史版本所有功能均可用，从2.0版本开始，LogCollector仅针对框架本身的更新来更新文档，不再涉及任何插件说明文档，插件的使用说明文档由插件项目维护。  
 ​      
 
-### 产品配置说明  
-1. 配置应用上下文  
-```Text
-vi /software/LogCollector/conf/context.properties
-context.realTime=true
-context.initOnStart=true
-emqx.persistenceType=org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
-emqx.hostList=192.168.162.127:1883
-emqx.filterName=defaultLogFilter
-emqx.protocolType=tcp
-emqx.batchSize=100
-```
-##### 参数说明：  
-|参数名称|参数类型|默认值|是否可选|参数说明|
-|-----|-------|-----|----------|-------|
-|context.realTime|boolean|true|可选|是否实时传送模式启动服务|
-|context.initOnStart|boolean|true|可选|是否在启动服务时初始化配置参数|
-|emqx.persistenceType|MqttClientPersistence|MemoryPersistence|可选|MQTT消息持久化类型|
-|emqx.hostList|string|127.0.0.1:1883|可选|MQTT服务器连接地址表,多个地址之间使用英文逗号","分隔|
-|emqx.filterName|string|filter|可选|过滤器配置文件名称(不含后缀扩展名)|
-|emqx.protocolType|string|tcp|可选|连接MQTT服务器使用的传输层协议,目前仅支持TCP协议|
-|emqx.batchSize|integer|100|可选|推送数据到MQTT服务器的批处理尺寸|
-​      
-2. 配置日志上下文  
-```Text
-vi /software/LogCollector/conf/logger.properties
-logger.appLogFile=g:/cloudlog/app/my2.log
-
-logger.transferSaveFile=g:/cloudlog/flume/mylogger.0
-logger.transferSaveMaxSize=2GB
-
-logger.loggerFile=g:/cloudlog/flume/mylogger.0
-logger.lineNumber=0
-logger.byteNumber=0
-
-logger.manualLoggerFile=g:/cloudlog/test/mylogger.0
-logger.manualLineNumber=0
-logger.manualByteNumber=0
-```
-##### 参数说明：  
-|参数名称|参数类型|默认值|是否可选|参数说明|
-|-----|-------|-----|----------|-------|
-|logger.appLogFile|string|无|必选|需要收集的应用方实时日志文件绝对路径,该日志文件可能由应用方的log4j组件产生|
-|logger.transferSaveFile|string|无|必选|实时转存日志文件绝对路径,该日志文件由转存进程维护,配置文件名必须以数字后缀扩展名0结尾,并由转存进程自动按数字序列依次递增切换|
-|logger.transferSaveMaxSize|string|2G|可选|实时转存日志文件最大尺寸,超过这个尺寸,转存进程将按数字递增序列创建下一个新的转存文件,参数值的单位有:B、KB、MB、GB、TB、EB等|
-|logger.loggerFile|string|无|必选|实时发送器缓冲日志文件绝对路径，该参数值必须与转存日志文件路径完全相同，该文件由发送器进程维护以实现断点续传，后续版本迭代会持续优化|
-|logger.lineNumber|integer|0|可选|实时发送器缓冲日志文件行号检查点|
-|logger.byteNumber|integer|0|可选|实时发送器缓冲日志文件字节检查点|
-|logger.manualLoggerFile|string|无|必选|离线发送器日志文件绝对路径|
-|logger.manualLineNumber|integer|0|可选|离线发送器缓冲日志文件行号检查点|
-|logger.manualByteNumber|integer|0|可选|离线发送器缓冲日志文件字节检查点|
-​      
-3. 配置过滤器上下文  
-```Text
-vi /software/LogCollector/filter/conf/defaultLogFilter.properties
-type=com.github.lixiang2114.etllog.filter.DefaultLogFilterImpl
-jwtSecret=bGl4aWFuZw==
-tokenFrom=password
-userName=admin
-passWord=public
-topic=Topic_Test
-tokenExpire=-1
-```
-##### 参数说明：  
-|参数名称|参数类型|默认值|是否可选|参数说明|
-|-----|-------|-----|----------|-------|
-|type|string|DefaultLogFilterImpl|可选|过滤器实现类全名|
-|jwtSecret|string|无|必选|用于加密Token的秘钥,该秘钥必须在MQTT服务端和客户端统一|
-|tokenFrom|string|password|可选|在访问MQTT服务时携带Token验证值的字段名|
-|userName|string|admin|可选|若使用Token验证(默认使用)则该参数验证被弱化|
-|passWord|string|public|可选|若使用Token验证(默认使用)则该参数值为Token值|
-|topic|string|无|必选|收集器连接MQTT服务器的主题名称|
-|tokenExpire|integer|-1|可选|连接MQTT服务器的Token过期时间,默认值为-1表示永不过期|
-​      
-4. 配置服务器上下文  
-LogCollector产品使用SpringBoot框架构建和开发，其运维侧服务配置与常规SpringBoot工程相同。我们可以打开LogCollector产品安装目录下的conf目录，并找到application.yml配置文件。将其打开并修改里面的参数，即可完成运维管理侧的服务配置。在该配置文件中，我们可以修改服务启动端口，服务器日志配置（后续会陆续优化）等参数，通常没有特别的理由，我们无需修改这些服务器参数，目前该配置文件的配置如下：  
-```Text
-cat /software/LogCollector/conf/application.yml
-
-server.port: 8088
-
-spring:
-  profiles.active: test
-  application.name: LogCollector
-
-logging.maxFileSize: 100MB
-logging.basePkg: com.github.lixiang2114.etllog
+2. 配置LogCollector
+```Shell
+vi /etc/profile
+LOGCOLLECTOR_HOME=/software/LogCollector-2.0
+PATH=$PATH:$LOGCOLLECTOR_HOME/bin
+export PATH LOGCOLLECTOR_HOME  
 ```
 ​      
-### 产品使用说明  
-1. 在线实时传送日志  
-+ 配置应用上下文  
-```Text
-vi /software/LogCollector/conf/context.properties
-context.realTime=true
-context.initOnStart=true
-emqx.persistenceType=org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
-emqx.hostList=192.168.162.127:1883
-emqx.filterName=defaultLogFilter
-emqx.protocolType=tcp
-```
-##### 备注：  
-注意上述参数都提供了默认值，hostList参数如果不配置则默认为"127.0.0.1:1883"，即连接本地的MQTT服务，filterName参数如果不配置则默认为filter  
-      
-+ 配置日志上下文  
-```Text
-vi /software/LogCollector/conf/logger.properties
-logger.appLogFile=g:/cloudlog/app/my2.log
 
-logger.transferSaveFile=g:/cloudlog/flume/mylogger.0
-logger.transferSaveMaxSize=2GB
+### 安装目录介绍  
+|目录名称|目录介绍|备注说明|
+|:-----:|:-------:|:-------:|
+|bin|二进制脚本及可执行文件|用于启停TRA服务/ETL服务、执行检查点等|
+|sys|系统平台核心运行库路径|用以支撑不同系统平台的运行时环境，不能变动或改变|
+|lib|系统应用核心支撑库路径|系统运行时依赖所必须，若没有特别理由，不要去改变|
+|conf|系统上下文及其日志配置|全局服务参数、应用上下文参数和系统级日志配置参数|
+|logs|系统应用运行时日志路径|若服务无法启动或系统启动错误，可通过系统日志进行排查|
+|flows|系统流程实例运行时目录|一个流程对应一个目录，该目录中插件支持缓存和运行时生成|
+|plugins|系统流程应用插件安装目录|插件服务于流程，可以通过自定义和安装插件来扩展本系统功能|
 
-logger.loggerFile=g:/cloudlog/flume/mylogger.0
-logger.lineNumber=0
-logger.byteNumber=0
-```
-##### 备注：  
-appLogFile参数值必须指向应用方SLF4J或Log4j日志输出文件绝对路径，否则无法采集应用方在线实时日志，其次，transferSaveFile参数值必须与loggerFile参数值保持相同，同时日志文件绝对路径后的后缀扩展名必须以数字0结尾  
-      
-+ 配置过滤器上下文  
-```Text
-vi /software/LogCollector/filter/conf/defaultLogFilter.properties
-type=com.github.lixiang2114.etllog.filter.DefaultLogFilterImpl
-jwtSecret=bGl4aWFuZw==
-tokenFrom=password
-userName=admin
-passWord=public
-topic=Topic_Test
-tokenExpire=-1
-```
-##### 备注：  
-如果MQTT服务端开启了Token访问认证，那么jwtSecret参数必须在日志收集器与MQTT服务端进行统一，否则认证无法通过，其次topic参数必须在日志收集器与MQTT消费者端进行统一，否则无法通过MQTT传递日志信息，最后如果tokenExpire参数值保持默认值-1则表示Token永不过期，此时日志收集器服务启动后将不再拉起Token调度池线程  
-      
-+ 启动日志收集器服务  
-bash /software/LogCollector/bin/startup.sh  
-```Text
-17:49:11.715 [main] DEBUG org.springframework.beans.factory.config.YamlPropertiesFactoryBean - Merging document (no matchers set): {server.port=8088, spring={profiles.active=test, application.name=LogCollector}, logging.maxFileSize=100MB, logging.basePkg=com.github.lixiang2114.etllog}
-17:49:11.715 [main] DEBUG org.springframework.beans.factory.config.YamlPropertiesFactoryBean - Loaded 1 document from YAML resource: class path resource [application.yml]
-
- __                             ______             __  __                        __
-/  |                           /      \           /  |/  |                      /  |
-$$ |        ______    ______  /$$$$$$  |  ______  $$ |$$ |  ______    _______  _$$ |_     ______    ______
-$$ |       /      \  /      \ $$ |  $$/  /      \ $$ |$$ | /      \  /       |/ $$   |   /      \  /      \
-$$ |      /$$$$$$  |/$$$$$$  |$$ |      /$$$$$$  |$$ |$$ |/$$$$$$  |/$$$$$$$/ $$$$$$/   /$$$$$$  |/$$$$$$  |
-$$ |      $$ |  $$ |$$ |  $$ |$$ |   __ $$ |  $$ |$$ |$$ |$$    $$ |$$ |        $$ | __ $$ |  $$ |$$ |  $$/
-$$ |_____ $$ \__$$ |$$ \__$$ |$$ \__/  |$$ \__$$ |$$ |$$ |$$$$$$$$/ $$ \_____   $$ |/  |$$ \__$$ |$$ |
-$$       |$$    $$/ $$    $$ |$$    $$/ $$    $$/ $$ |$$ |$$       |$$       |  $$  $$/ $$    $$/ $$ |
-$$$$$$$$/  $$$$$$/   $$$$$$$ | $$$$$$/   $$$$$$/  $$/ $$/  $$$$$$$/  $$$$$$$/    $$$$/   $$$$$$/  $$/
-                    /  \__$$ |
-                    $$    $$/
-                     $$$$$$/
-
-Author: LiXiang    Language:JAVA    Framework: SpringBoot-V2.1.15
-2020-12-25 17:49:14.173 INFO  org.apache.coyote.http11.Http11NioProtocolInitializing ProtocolHandler ["http-nio-8088"]
-2020-12-25 17:49:14.194 INFO  org.apache.catalina.core.StandardServiceStarting service [Tomcat]
-2020-12-25 17:49:14.195 INFO  org.apache.catalina.core.StandardEngineStarting Servlet engine: [Apache Tomcat/9.0.36]
-2020-12-25 17:49:14.345 INFO  org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/]Initializing Spring embedded WebApplicationContext
-INFO: load context config....
-INFO: initing logger config....
-INFO: initing emqx config....
-INFO:====load filter class file:com.github.lixiang2114.etllog.filter.DefaultLogFilterImpl
-INFO: auto initialized filter parameter complete!
-Warn: com.github.lixiang2114.etllog.filter.DefaultLogFilterImpl may not be manual initialized:filterConfig
-INFO: emqx host address initialized complete:[Ljava.lang.String;@769f71a9
-INFO: emqx host connection initialized complete: URLS: [tcp://192.168.162.127:1883] tokenFromPass: true useName:admin passWord: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MjYwODg4OTc1NCwiaWF0IjoxNjA4ODg5NzU0fQ.zNtr0C6Yh7fxiIi75iImTumlMcq51t29AhZAxvGT8BU
-INFO: start token Scheduler process....
-INFO: current system is windows,tailf path is: G:\LogCollector\bin\tailf.exe
-INFO: start realtime ETL process....
-INFO: start transfer Save process....
-2020-12-25 17:49:15.925 INFO  org.apache.coyote.http11.Http11NioProtocolStarting ProtocolHandler ["http-nio-8088"]
-```
-&#8203;
-##### 备注：  
-日志收集器服务一旦启动之后，就自动开始收集本地应用端日志并将其推送到指定的MQTT服务器了，可以通过日志收集器运维管理侧的接口来控制ETL流程、转存流程、Token调度流程等的启停，甚至可以在运行时动态变更配置收集器各项参数等  
-&#8203;
-    
-+ 停止日志收集器服务  
-Windows端可以直接在收集器本地按下Ctrl+C平滑终止服务，Linux端可以直接执行pkill java命令来平滑终止服务，最后，不论是Windows端还是Linux端都可以直接发送以下命令来平滑终止收集器服务进程：    
-curl -ik -X GET http://127.0.0.1:8088/admin/shutdown  
-$#8203;  
 ​      
-2. 离线批量传送日志  
-+ 配置应用上下文  
-```Text
-vi /software/LogCollector/conf/context.properties
-context.realTime=false
-context.initOnStart=true
-emqx.persistenceType=org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
-emqx.hostList=192.168.162.127:1883
-emqx.filterName=defaultLogFilter
-emqx.protocolType=tcp
-```
-##### 备注：  
-相对于离线批量传送而言，只需要将realTime参数改成false即可，其它参数保持不变  
-      
-+ 配置日志上下文  
-```Text
-vi /software/LogCollector/conf/logger.properties
-logger.manualLoggerFile=g:/cloudlog/test/mylogger.0
-logger.manualLineNumber=0
-logger.manualByteNumber=0
-```
-##### 备注：  
-相对于离线批量传送而言，离线传送日志的配置很简单，只需要指定传送的日志文件和检查点即可  
-      
-+ 配置过滤器上下文  
-```Text
-vi /software/LogCollector/filter/conf/defaultLogFilter.properties
-type=com.github.lixiang2114.etllog.filter.DefaultLogFilterImpl
-jwtSecret=bGl4aWFuZw==
-tokenFrom=password
-userName=admin
-passWord=public
-topic=Topic_Test
-tokenExpire=-1
-```
-##### 备注：  
-相对于离线批量传送而言，过滤器的配置没有任何变化，因为这些参数实际上是MQTT的连接参数，不论是实时传送还是离线传送，这些参数都是需要的  
-      
-+ 启动日志收集器服务  
-bash /software/LogCollector/bin/startup.sh  
-```Text
-17:49:11.715 [main] DEBUG org.springframework.beans.factory.config.YamlPropertiesFactoryBean - Merging document (no matchers set): {server.port=8088, spring={profiles.active=test, application.name=LogCollector}, logging.maxFileSize=100MB, logging.basePkg=com.github.lixiang2114.etllog}
-17:49:11.715 [main] DEBUG org.springframework.beans.factory.config.YamlPropertiesFactoryBean - Loaded 1 document from YAML resource: class path resource [application.yml]
+### BIN目录脚本说明    
+凡是以cmd结尾的脚本文件都是Windows系统上使用的脚本，凡是以sh结尾的脚本文件都是Linux系统上使用的脚本，以下仅提及脚本文件名称，除非特别说明，否则不再区分不同的系统平台  
+|脚本文件|功能介绍|备注说明|
+|:-----:|:-------:|:-------:|
+|status|系统服务状态脚本|查看系统服务状态|
+|startup|系统服务启动脚本|用于启动系统服务|
+|shutdown|系统服务停止脚本|用于平滑停止系统服务|
+|stopAllETL|所有ETL流程停止脚本|用于平滑停止所有ETL流程|
+|forceShutdown|系统服务强制停止脚本|使用kill命令强制杀掉系统服务|
+|checkpointETLAll|流程实例检查点执行脚本|用于持久化流程实例的检查点状态|
 
- __                             ______             __  __                        __
-/  |                           /      \           /  |/  |                      /  |
-$$ |        ______    ______  /$$$$$$  |  ______  $$ |$$ |  ______    _______  _$$ |_     ______    ______
-$$ |       /      \  /      \ $$ |  $$/  /      \ $$ |$$ | /      \  /       |/ $$   |   /      \  /      \
-$$ |      /$$$$$$  |/$$$$$$  |$$ |      /$$$$$$  |$$ |$$ |/$$$$$$  |/$$$$$$$/ $$$$$$/   /$$$$$$  |/$$$$$$  |
-$$ |      $$ |  $$ |$$ |  $$ |$$ |   __ $$ |  $$ |$$ |$$ |$$    $$ |$$ |        $$ | __ $$ |  $$ |$$ |  $$/
-$$ |_____ $$ \__$$ |$$ \__$$ |$$ \__/  |$$ \__$$ |$$ |$$ |$$$$$$$$/ $$ \_____   $$ |/  |$$ \__$$ |$$ |
-$$       |$$    $$/ $$    $$ |$$    $$/ $$    $$/ $$ |$$ |$$       |$$       |  $$  $$/ $$    $$/ $$ |
-$$$$$$$$/  $$$$$$/   $$$$$$$ | $$$$$$/   $$$$$$/  $$/ $$/  $$$$$$$/  $$$$$$$/    $$$$/   $$$$$$/  $$/
-                    /  \__$$ |
-                    $$    $$/
-                     $$$$$$/
-
-Author: LiXiang    Language:JAVA    Framework: SpringBoot-V2.1.15
-2020-12-25 17:49:14.173 INFO  org.apache.coyote.http11.Http11NioProtocolInitializing ProtocolHandler ["http-nio-8088"]
-2020-12-25 17:49:14.194 INFO  org.apache.catalina.core.StandardServiceStarting service [Tomcat]
-2020-12-25 17:49:14.195 INFO  org.apache.catalina.core.StandardEngineStarting Servlet engine: [Apache Tomcat/9.0.36]
-2020-12-25 17:49:14.345 INFO  org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/]Initializing Spring embedded WebApplicationContext
-INFO: load context config....
-INFO: initing logger config....
-INFO: initing emqx config....
-INFO:====load filter class file:com.github.lixiang2114.etllog.filter.DefaultLogFilterImpl
-INFO: auto initialized filter parameter complete!
-Warn: com.github.lixiang2114.etllog.filter.DefaultLogFilterImpl may not be manual initialized:filterConfig
-INFO: emqx host address initialized complete:[Ljava.lang.String;@769f71a9
-INFO: emqx host connection initialized complete: URLS: [tcp://192.168.162.127:1883] tokenFromPass: true useName:admin passWord: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MjYwODg4OTc1NCwiaWF0IjoxNjA4ODg5NzU0fQ.zNtr0C6Yh7fxiIi75iImTumlMcq51t29AhZAxvGT8BU
-INFO: start token Scheduler process....
-INFO: current system is windows,tailf path is: G:\LogCollector\bin\tailf.exe
-INFO: start realtime ETL process....
-INFO: start transfer Save process....
-2020-12-25 17:49:15.925 INFO  org.apache.coyote.http11.Http11NioProtocolStarting ProtocolHandler 
-..................................
-..................................
-Server is Stopped...
-["http-nio-8088"]
+​    
+### CONF目录配置说明    
+|配置文件|功能介绍|备注说明|
+|:-----:|:-------:|:-------:|
+|application.yml|系统服务配置|配置绑定IP、端口、日志路径等|
+|context.properties|系统应用配置|配置应用上下文参数、流程实例参数等|
+|logback-spring.xml|系统日志配置|配置上下文日志参数、流程日志参数、插件日志参数等|
+​    
+### LOGS目录日志说明    
+|日志文件|功能介绍|备注说明|
+|:-----:|:-------:|:-------:|
+|flow.log|流程实例运行时日志|流程实例启停日志、运行日志和插件日志等|
+|server.log|系统服务运行时日志|系统服务启停日志、管理日志和访问日志等|
+​    
+### PLUGINS目录插件说明    
+|插件名称|插件介绍|备注说明|
+|:-----:|:-------:|:-------:|
+|fileSink|本地文件发送器|用于将通道接收到的文本数据持久化到本地文件系统|
+|httpSink|Web服务发送器|用于将通道接收到的数据发送到Web服务器，支持认证和会话跟踪|
+|mqttSink|Mqtt服务发送器|用于将通道接收到的数据发送到Mqtt服务器，支持认证和会话跟踪|
+|defaultFilter|ETL通道默认过滤器|用于接收上游通道文本数据，并将其过滤后的文本发送到下游通道|
+|fileManual|本地文件离线收集器|用于离线读取本地文件系统中的文本数据，并将其发送到下游通道|
+|fileRealtime|本地文件实时收集器|用于实时读取本地文件系统中的文本数据，并将其发送到下游通道|
+|mongoSink|MongoDB服务发送器|用于将通道接收到的数据发送到MongoDB服务器，支持认证和会话跟踪|
+|httpTransfer|Web服务实时转存器|用于实时读取Web端口文本数据，并将其转存到本地缓冲目录或发送到下游通道|
+|mqttTransfer|Mqtt服务实时转存器|用于实时读取Mqtt端口文本数据，并将其转存到本地缓冲目录或发送到下游通道|
+|fileTransfer|本地文件实时转存器|用于实时读取本地文件系统中的文本数据，并将其转存到本地缓冲目录或发送到下游通道|
+​    
+### 应用流程设计    
+#### 定义流程目录及配置文件  
+```Shell
+#在日志系统安装目录下的flows子目录下创建流程目录
+mkdir -p $LOGCOLLECTOR_HOME/flows/fileToFile
+#在流程目录下创建流程参数配置文件,文件名与目录名一致
+touch $LOGCOLLECTOR_HOME/flows/fileToFile/fileToFile.properties
 ```
-&#8203;
 ##### 备注：  
-对于离线传送而言，日志收集器并非是启动一个服务来连续运行，而是将离线日志批量传送完成后自动退出服务进程，从这个意义上来讲，日志收集器更像是一个日志ETL工具  
-&#8203;
-    
-+ 停止日志收集器服务  
-对于离线传送而言，日志传送完毕后将自动关闭收集器进程，所以我们无需手动关闭它  
+根据日志系统框架接口规范的约定原则，流程目录名称（fileToFile）必须与流程目录下的配置文件名（fileToFile.properties）保持一致，否则日志系统框架LogCollector无法装载流程实例，从而导致流程无法启动。  
+
+#### 设计流程并配置流程参数  
+```Shell
+vi $LOGCOLLECTOR_HOME/fileToFile/fileToFile.properties
+#定义发送器插件
+sink=fileSink
+#定义过滤器插件
+filter=defaultFilter
+#定义收集器插件
+source=fileRealtime
+#定义转存器插件
+transfer=fileTransfer
+#不清空缓存插件
+clearCache=false
+#流程为实时ETL流程
+realTime=true
+```
+##### 备注：  
+应用流程的配置取决于流程实例的设计，而流程实例的设计源自于业务系统的需求定义；根据流程的运行机制，各种不同类型的插件之间可以任意组合以实现不同的流程控制。  
+
+#### 挂载流程并配置到日志系统  
+```Shell
+vi $LOGCOLLECTOR_HOME/conf/context.properties
+#日志系统服务启动时装载并初始化所有流程
+loadMode=true
+#日志系统服务启动时装载的流程列表,多个流程之间使用英文逗号","分隔
+flowList=fileToFile
+```
+##### 特别说明:  
+流程初始化时将拷贝流程引用的所有插件目录到流程目录下，其目的是实现基于流程实例空间的数据隔离；在日志系统安装目录下的flows目录下预置了一些流程，这些流程可以直接使用，也可以根据自己的业务系统需求酌情修改配置以适应自己的流程设计需要。  
+
+​    
+### 应用插件开发    
+#### 发送器Sink插件开发步骤  
+1. 创建Maven工程并引入以下依赖项
+```Text
+<dependency>
+    <groupId>com.github.lixiang2114.etllog</groupId>
+    <artifactId>LogCollector</artifactId>
+    <version>2.0</version>
+    <scope>provided</scope>
+</dependency>
+```
+##### 备注:  
+LogCollector依赖库可以从下面的地址下载:  
+wget https://github.com/lixiang2114/LogCollector/blob/main/target/LogCollector-2.0.jar  
+​    
+2. 编写插件接口实现类FileSink
+```JAVA
+package com.lc.plugin.sink.file;
+
+import java.io.File;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.github.lixiang2114.flow.comps.Channel;
+import com.lc.plugin.sink.file.config.FileConfig;
+import com.lc.plugin.sink.file.service.FileService;
+import com.github.lixiang2114.flow.plugins.adapter.SinkPluginAdapter;
+
+/**
+ * @author Lixiang
+ * @description File发送器
+ */
+public class FileSink extends SinkPluginAdapter{
+	/**
+	 * 文件写出配置
+	 */
+	private FileConfig fileConfig;
+	
+	/**
+	 * 文件服务配置
+	 */
+	private FileService fileService;
+	
+	/**
+	 * 日志工具
+	 */
+	private static final Logger log=LoggerFactory.getLogger(FileSink.class);
+	
+	@Override
+	public Boolean init() throws Exception {
+		log.info("FileSink plugin starting...");
+		File confFile=new File(pluginPath,"sink.properties");
+		if(!confFile.exists()) {
+			log.error(confFile.getAbsolutePath()+" is not exists...");
+			return false;
+		}
+		
+		this.fileConfig=new FileConfig(flow).config();
+		this.fileService=new FileService(fileConfig);
+		
+		return true;
+	}
+
+	@Override
+	public Object send(Channel<String> filterToSinkChannel) throws Exception {
+		log.info("FileSink plugin handing...");
+		if(flow.sinkStart) {
+			log.info("FileSink is already started...");
+			return true;
+		}
+		
+		flow.sinkStart=true;
+		
+		try{
+			String message=null;
+			while(flow.sinkStart) {
+				if(null==(message=filterToSinkChannel.get())) continue;
+				if(!fileService.writeMessage(message)) return false;
+			}
+		}catch(Exception e){
+			log.warn("sink plugin is interrupted while waiting...");
+		}
+		
+		return true;
+	}
+	
+	@Override
+	public Object stop(Object params) throws Exception {
+		flow.sinkStart=false;
+		fileService.stop();
+		return true;
+	}
+
+	@Override
+	public Object config(Object... params) throws Exception{
+		log.info("FileSink plugin config...");
+		if(null==params || 0==params.length) return fileConfig.collectRealtimeParams();
+		if(params.length<2) return fileConfig.getFieldValue((String)params[0]);
+		return fileConfig.setFieldValue((String)params[0],params[1]);
+	}
+}
+```
+##### 备注：  
+插件的名称可以自定义，但需要和接口配置文件名保持一致；开发发送器Sink插件一般需要继承适配器SinkPluginAdapter类，然后实现其中的虚方法，上面编写了接口实现类(即：插件入口类)，其余类可根据插件实现需求酌情定义，本处略。  
+​    
+
+3. 编译打包插件工程  
+```Shell
+#切换到插件所在工程目录下
+cd $ProjectHome/  
+#编译打包插件工程,打包后的归档文件在$ProjectHome/target目录下生成
+mvn clean compile package -Dmaven.test.skip=true  
+```
+​    
+4. 安装并配置插件目录  
+* 创建插件目录和配置文件
+```Shell
+source /etc/profile  
+#此目录结构是固定的
+mkdir -p $LOGCOLLECTOR_HOME/plugins/fileSink/lib  
+#文件名sink.properties是Sink插件的专用名,不可更改
+touch $LOGCOLLECTOR_HOME/plugins/fileSink/sink.properties
+#文件名fileSink.properties必须与插件目录一致,不可更改
+touch $LOGCOLLECTOR_HOME/plugins/fileSink/fileSink.properties
+#拷贝打包后的插件归档文件到创建的lib目录下
+cp -a $ProjectHome/target/FileSink-1.0.jar $LOGCOLLECTOR_HOME/plugins/fileSink/lib/
+```
+* 编写插件接口配置文件
+```Properties
+vi /install/plugins/fileSink/fileSink.properties
+#插件依赖的第三方包路径
+classPath=lib
+#系统调用插件的入口引导类
+bootType=com.lc.plugin.sink.file.FileSink
+```
+* 编写插件应用配置文件  
+```Properties
+vi /install/plugins/fileSink/sink.properties
+#持久化到本地文件系统的文件全名
+filePath=/install/test/log-test/dest/dest.log
+#单个文件最大尺寸,超过这个阈值则滚动生成新文件
+maxFileSize=100MB
+#最大历史文件数量，超过这个阈值则删除旧的历史文件
+maxHistory=1
+
+备注:
+本配置文件需要根据插件应用本身的需求来进行参数配置
+```
+##### 备注：  
+插件目录下可以根据插件本身的需求酌情创建其它目录和编写其它配置文件，这个完全取决于插件本身的需求，与日志系统框架LogCollector无关；插件库路径目录名lib针对所有插件都是固定的，不能修改，应用配置文件名sink.properties针对所有的Sink发送器插件都是固定的（如果是Source收集器插件则变成source.properties，以此类推...）；而根据系统级约定规则，接口配置文件fileSink.properties的文件名fileSink必须与插件目录同名，否则日志系统框架LogCollector将找不到插件接口配置，从而造成系统框架在运行时无法装载插件。  
+##### 特别说明:  
+上述介绍的是Sink发送器插件的开发和安装流程，其余类型的插件开发安装流程与之相同，只是第二步实现接口略有差异，下面仅介绍其它类型插件的接口实现示例。  
+​    
+#### 转存器Transfer插件接口实现示例  
+```JAVA
+package com.lc.plugin.transfer.file;
+
+import java.io.File;
+import org.slf4j.Logger;
+import java.io.IOException;
+import org.slf4j.LoggerFactory;
+import com.github.lixiang2114.flow.comps.Channel;
+import com.lc.plugin.transfer.file.config.FileConfig;
+import com.lc.plugin.transfer.file.service.FileService;
+import com.github.lixiang2114.flow.plugins.adapter.TransferPluginAdapter;
+
+/**
+ * @author Lixiang
+ * @description 基于文件系统的Transfer插件
+ */
+public class FileTransfer extends TransferPluginAdapter {
+	/**
+	 * FileSource配置
+	 */
+	private FileConfig fileConfig;
+	
+	/**
+	 * FileService服务组件
+	 */
+	private FileService fileService;
+	
+	/**
+	 * 日志工具
+	 */
+	private static final Logger log=LoggerFactory.getLogger(FileTransfer.class);
+	
+	@Override
+	public Boolean init() throws Exception {
+		log.info("FileTransfer plugin starting...");
+		File confFile=new File(pluginPath,"transfer.properties");
+		if(!confFile.exists()) {
+			log.error(confFile.getAbsolutePath()+" is not exists...");
+			return false;
+		}
+		
+		this.fileConfig=new FileConfig(flow).config();
+		fileService=new FileService(fileConfig);
+		
+		return true;
+	}
+	
+	@Override
+	public Object transfer(Channel<String> transferToSourceChannel) throws Exception {
+		log.info("FileTransfer plugin starting...");
+		if(flow.transferStart) {
+			log.info("FileTransfer is already started...");
+			return true;
+		}
+		
+		flow.transferStart=true;
+		return fileService.startLogTransferSave(transferToSourceChannel);
+	}
+	
+	@Override
+	public Object stop(Object params) throws Exception {
+		return fileService.stopLogTransferSave(params);
+	}
+
+	@Override
+	public Object config(Object... params) throws Exception {
+		log.info("FileTransfer plugin config...");
+		if(null==params || 0==params.length) return fileConfig.collectRealtimeParams();
+		if(params.length<2) return fileConfig.getFieldValue((String)params[0]);
+		return fileConfig.setFieldValue((String)params[0],params[1]);
+	}
+
+	/**
+	 * 刷新日志文件检查点
+	 * @throws IOException
+	 */
+	@Override
+	public Object checkPoint(Object params) throws Exception{
+		log.info("FileTransfer plugin reflesh checkpoint...");
+		fileConfig.refreshCheckPoint();
+		return true;
+	}
+}
+```
+##### 特别说明:  
+转存器在流程实例中是可选插件，并不是必须的；在某些流程中，如果允许数据存在一定程度上的丢失，则可以使用Source插件直接对接应用数据源。  
+
+#### 过滤器Filter插件接口实现示例  
+```JAVA
+package com.lc.plugin.filter;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.github.lixiang2114.flow.comps.Channel;
+import com.github.lixiang2114.flow.plugins.adapter.FilterPluginAdapter;
+
+/**
+ * @author Lixiang
+ * @description 默认过滤器
+ */
+public class DefaultFilter extends FilterPluginAdapter{
+	/**
+	 * 日志工具
+	 */
+	private static final Logger log=LoggerFactory.getLogger(DefaultFilter.class);
+
+	@Override
+	public Object filter(Channel<String> sourceToFilterChannel,Channel<String> filterToSinkChannel) throws Exception{
+		log.info("DefaultFilter plugin filtering...");
+		if(flow.filterStart) {
+			log.info("DefaultFilter is already started...");
+			return true;
+		}
+		
+		flow.filterStart=true;
+		try{
+			String message=null;
+			while(flow.filterStart) {
+				if(null==(message=sourceToFilterChannel.get())) continue;
+				filterToSinkChannel.put(message);
+			}
+		}catch(InterruptedException e){
+			log.warn("filter plugin is interrupted while waiting...");
+		}
+		
+		return true;
+	}
+
+	@Override
+	public Object stop(Object params) throws Exception {
+		flow.filterStart=false;
+		return true;
+	}
+}
+```
+##### 特别说明:  
+上述是系统提供的默认过滤器实现，它没有对数据做任何转换和过滤操作，仅仅是将上游通道的数据读取出来推送到下游通道；如果需要转换或过滤数据则需要针对不同的业务编写不同的过滤器，而不是直接使用系统提供的默认过滤器。  
+
+#### 收集器Source插件接口实现示例  
+```JAVA
+package com.lc.plugin.source.rt.file;
+
+import java.io.File;
+import org.slf4j.Logger;
+import java.io.IOException;
+import org.slf4j.LoggerFactory;
+import com.github.lixiang2114.flow.comps.Channel;
+import com.lc.plugin.source.rt.file.config.FileConfig;
+import com.lc.plugin.source.rt.file.service.FileService;
+import com.github.lixiang2114.flow.plugins.adapter.RealtimePluginAdapter;
+
+/**
+ * @author Lixiang
+ * @description 基于文件系统的实时Source插件
+ */
+public class FileRealtime extends RealtimePluginAdapter {
+	/**
+	 * FileRealtime配置
+	 */
+	private FileConfig fileConfig;
+	
+	/**
+	 * FileService服务组件
+	 */
+	private FileService fileService;
+	
+	/**
+	 * 日志工具
+	 */
+	private static final Logger log=LoggerFactory.getLogger(FileRealtime.class);
+	
+	@Override
+	public Boolean init() throws Exception {
+		log.info("FileRealtime plugin starting...");
+		File confFile=new File(pluginPath,"source.properties");
+		if(!confFile.exists()) {
+			log.error(confFile.getAbsolutePath()+" is not exists...");
+			return false;
+		}
+		
+		this.fileConfig=new FileConfig(flow).config();
+		fileService=new FileService(fileConfig);
+		
+		return true;
+	}
+
+	@Override
+	public Object handle(Channel<String> transferToETLChannel, Channel<String> sourceToFilterChannel) throws Exception {
+		log.info("FileRealtime plugin starting...");
+		if(flow.sourceStart) {
+			log.info("FileRealtime is already started...");
+			return true;
+		}
+		
+		flow.sourceStart=true;
+		return fileService.startRealtimeETLProcess(sourceToFilterChannel);
+	}
+	
+	@Override
+	public Object stop(Object params) throws Exception {
+		flow.sourceStart=false;
+		return true;
+	}
+
+	@Override
+	public Object config(Object... params) throws Exception {
+		log.info("FileRealtime plugin config...");
+		if(null==params || 0==params.length) return fileConfig.collectRealtimeParams();
+		if(params.length<2) return fileConfig.getFieldValue((String)params[0]);
+		return fileConfig.setFieldValue((String)params[0],params[1]);
+	}
+
+	/**
+	 * 刷新日志文件检查点
+	 * @throws IOException
+	 */
+	@Override
+	public Object checkPoint(Object params) throws Exception{
+		log.info("FileRealtime plugin reflesh checkpoint...");
+		fileConfig.refreshCheckPoint();
+		return true;
+	}
+}
+```
+##### 特别说明:  
+上述介绍的是实时Source插件的接口实现，离线Source插件的接口实现与之类同，此处略；为保证实时流程的健壮性，我们通常都需要基于本地文件系统的实时Source插件支持。如果不需要为转换数据格式而编写过滤器，那么可直接使用系统提供的默认过滤器（DefaultFilter）；因此，在大多数情况下，我们为设计流程而编写的插件通常是Transfer转存插件和Sink发送器插件。  
