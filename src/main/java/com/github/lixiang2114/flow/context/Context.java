@@ -22,6 +22,7 @@ import com.github.lixiang2114.flow.plugins.face.TransferPlugin;
 import com.github.lixiang2114.flow.thread.GracefulShutdown;
 import com.github.lixiang2114.flow.util.ApplicationUtil;
 import com.github.lixiang2114.flow.util.ClassLoaderUtil;
+import com.github.lixiang2114.flow.util.FileUtil;
 import com.github.lixiang2114.flow.util.PropertiesReader;
 
 /**
@@ -252,5 +253,17 @@ public class Context {
 		
 		Runtime.getRuntime().addShutdownHook(new GracefulShutdown());
 		log.info("load application context complete...");
+	}
+	
+	/**
+	 * 输出JVM进程ID文件
+	 * @throws Exception 
+	 */
+	public static final void generatePidFile() throws Exception {
+		Integer processID=ApplicationUtil.getJvmProcessID();
+		if(null==processID) return;
+		File pidFile=new File(projectFile,"logs/pid");
+		FileUtil.overrideWriteFile(pidFile, processID.toString());
+		pidFile.deleteOnExit();
 	}
 }

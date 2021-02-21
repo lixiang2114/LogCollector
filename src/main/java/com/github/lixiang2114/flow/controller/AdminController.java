@@ -44,9 +44,10 @@ public class AdminController {
 		Context.loadContext();
 		if(Context.initOnStart) {
 			startAllFlows();
-			return;
+		}else{
+			log.info("initOnStart is: "+Context.initOnStart+",application context will not be initing...");
 		}
-		log.info("initOnStart is: "+Context.initOnStart+",application context will not be initing...");
+		Context.generatePidFile();
 	}
 	
 	@RequestMapping(path="/shutdown")

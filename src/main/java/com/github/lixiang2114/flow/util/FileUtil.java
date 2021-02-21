@@ -9,9 +9,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
@@ -717,5 +721,95 @@ public class FileUtil {
 		
 		for(File subFile:subFiles) dropFile(subFile);
 		srcFile.delete();
+	}
+	
+	/**
+	 * 将指定的参数字串以指定的写出方式写入参数指定的文件中,文件不存在则自动创建
+	 * @param outFile 写出的文件
+	 * @param conent 被写出的字符串
+	 */
+	public static final void overrideWriteFile(File outFile,String conent) {
+		setFileContent(outFile,conent);
+	}
+	
+	/**
+	 * 将指定的参数字串以指定的写出方式写入参数指定的文件中,文件不存在则自动创建
+	 * @param outFile 写出的文件
+	 * @param conent 被写出的字符串
+	 */
+	public static final void appendWriteFile(File outFile,String conent) {
+		setFileContent(outFile,conent,StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+	}
+	
+	/**
+	 * 将指定的参数字串以指定的写出方式写入参数指定的文件中,文件不存在则自动创建
+	 * @param outFile 写出的文件
+	 * @param conent 被写出的字符串列表
+	 */
+	public static final void overrideWriteFiles(File outFile,List<String> conents) {
+		setFileContents(outFile,conents);
+	}
+	
+	/**
+	 * 将指定的参数字串以指定的写出方式写入参数指定的文件中,文件不存在则自动创建
+	 * @param outFile 写出的文件
+	 * @param conent 被写出的字符串列表
+	 */
+	public static final void appendWriteFiles(File outFile,List<String> conents) {
+		setFileContents(outFile,conents,StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+	}
+	
+	/**
+	 * 将指定的参数字串以指定的写出方式写入参数指定的文件中
+	 * @param outFile 写出的文件
+	 * @param conent 被写出的字符串
+	 * @param options 写出的模式(默认为覆盖写[先清空源文件再写入])
+	 * 写出模式是StandardOpenOption枚举类的一个实例:
+	 * 追加写出:StandardOpenOption.CREATE+StandardOpenOption.APPEND
+	 * 覆盖写出:StandardOpenOption.CREATE+StandardOpenOption.TRUNCATE_EXISTING
+	 */
+	public static final void setFileContent(File outFile,String conent,OpenOption... options) {
+		if(null==conent) return;
+		conent=conent.trim();
+		if(0==conent.length()) return;
+		try {
+			Files.write(outFile.toPath(), conent.getBytes(), options);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 将指定的参数列表以指定的写出方式写入参数指定的文件中
+	 * @param outFile 输出到指定的文件
+	 * @param lines 被写出的参数字串列表
+	 * @param options 写出的模式(默认为覆盖写[先清空源文件再写入])
+	 * 写出模式是StandardOpenOption枚举类的一个实例
+	 */
+	public static final void setFileContents(File outFile,Iterable<String> lines,OpenOption... options) {
+		if(null==lines) return;
+		try {
+			Files.write(outFile.toPath(), lines, StandardCharsets.UTF_8, options);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 将指定的参数列表以指定的写出方式写入参数指定的文件中
+	 * @param outFile 输出到指定的文件
+	 * @param lines 被写出的参数字串列表
+	 * @param charset 写出的字符编码
+	 * @param options 写出的模式(默认为覆盖写[先清空源文件再写入])
+	 * 写出模式是StandardOpenOption枚举类的一个实例
+	 */
+	public static final void setFileContents(File outFile,Iterable<? extends CharSequence> lines,Charset charset,OpenOption... options) {
+		if(null==lines) return;
+		if(null==charset) charset=StandardCharsets.UTF_8;
+		try {
+			Files.write(outFile.toPath(), lines, charset, options);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

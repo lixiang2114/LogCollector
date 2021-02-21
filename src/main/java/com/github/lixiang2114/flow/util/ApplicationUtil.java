@@ -3,6 +3,7 @@ package com.github.lixiang2114.flow.util;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -79,6 +80,11 @@ public class ApplicationUtil {
      * 工程类路径配置
      */
     private static final String PROJECT_CLASS_PATH  = "java.class.path";
+    
+    /**
+     * Email地址分隔符正则式
+     */
+    private static final Pattern EMAIL_SEPARATOR_REGEX=Pattern.compile("@");
     
     /**
      * WebSocket容器配置
@@ -1174,6 +1180,18 @@ public class ApplicationUtil {
 			list.addAll(tmpList);
 		}
 		return list;
+	}
+	
+	/**
+	 * 获取当前Jvm进程ID
+	 */
+	public static Integer getJvmProcessID(){
+		 String jvmName = ManagementFactory.getRuntimeMXBean().getName();
+		 if(null==jvmName) return null;
+		 jvmName=jvmName.trim();
+		 if(0==jvmName.length()) return null;
+		 if(-1==jvmName.indexOf("@")) return null;
+		 return Integer.parseInt(EMAIL_SEPARATOR_REGEX.split(jvmName)[0]);
 	}
 	
 	/**
