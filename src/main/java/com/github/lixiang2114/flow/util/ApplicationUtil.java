@@ -21,8 +21,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import javax.lang.model.SourceVersion;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.websocket.DeploymentException;
@@ -44,6 +46,10 @@ import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.util.SystemPropertyUtils;
 import org.springframework.web.context.support.GenericWebApplicationContext;
+
+import com.sun.jna.Pointer;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinNT;
 
 /**
  * @author Lixiang
@@ -1192,6 +1198,135 @@ public class ApplicationUtil {
 		 if(0==jvmName.length()) return null;
 		 if(-1==jvmName.indexOf("@")) return null;
 		 return Integer.parseInt(EMAIL_SEPARATOR_REGEX.split(jvmName)[0]);
+	}
+	
+	/**
+	 * 强制杀掉子进程
+	 * @param process 子进程
+	 */
+	public static final Boolean forceKillProcess(Process process) {
+		return killProcess(process,true);
+	}
+	
+	/**
+	 * 平滑杀掉子进程
+	 * @param process 子进程
+	 */
+	public static final Boolean gracefulKillProcess(Process process) {
+		return killProcess(process,false);
+	}
+	
+	/**
+	 * 强制杀掉子进程
+	 * @param process 子进程ID
+	 */
+	public static final Boolean forceKillProcess(long processId) {
+		return killProcess(processId,true);
+	}
+	
+	/**
+	 * 平滑杀掉子进程
+	 * @param process 子进程ID
+	 */
+	public static final Boolean gracefulKillProcess(long processId) {
+		return killProcess(processId,false);
+	}
+	
+	/**
+	 * 杀掉子进程
+	 * @param process 子进程
+	 * @param force 是否强制杀掉(true:强制,false:平滑)
+	 */
+	public static final Boolean killProcess(Process process,boolean force) {
+		if(null==process) return null;
+		
+		Long processId=getProcessID(process);
+		if(null==processId) return null;
+		
+		return killProcess(processId,force);
+	}
+	
+	/**
+	 * 杀掉子进程
+	 * @param processId 子进程ID
+	 * @param force 是否强制杀掉(true:强制,false:平滑)
+	 */
+	public static final Boolean killProcess(long processId,boolean force) {
+		String osName=ManagementFactory.getOperatingSystemMXBean().getName().trim().toLowerCase();
+		try {
+			if(osName.startsWith("win")) {
+				if(force){
+					return Runtime.getRuntime().exec("taskkill /T /F /PID "+processId).waitFor(15, TimeUnit.SECONDS);
+				}else{
+					return Runtime.getRuntime().exec("taskkill /T /PID "+processId).waitFor(15, TimeUnit.SECONDS);
+				}
+			} else {
+				if(force){
+					return Runtime.getRuntime().exec("kill -9 "+processId).waitFor(15, TimeUnit.SECONDS);
+				}else{
+					return Runtime.getRuntime().exec("kill -sigterm "+processId).waitFor(15, TimeUnit.SECONDS);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	/**
+	 * 获取子进程ID
+	 * @param process 子进程
+	 * @return 子进程ID
+	 */
+	public static final Long getProcessID(Process process) {
+		if(null==process) return null;
+		switch (SourceVersion.latest().toString()) {
+			case "RELEASE_0":
+			case "RELEASE_1":
+			case "RELEASE_2":
+			case "RELEASE_3":
+			case "RELEASE_4":
+			case "RELEASE_5":
+			case "RELEASE_6":
+			case "RELEASE_7":
+			case "RELEASE_8":
+				Class<? extends Process> processImpl=process.getClass();
+				String processImplName = processImpl.getName();
+				try{
+					if ("java.lang.UNIXProcess".equals(processImplName)) {
+						Field pidField = processImpl.getDeclaredField("pid");
+						pidField.setAccessible(true);
+						Object value = pidField.get(process);
+						if (value instanceof Number) return ((Number)value).longValue();
+						return null;
+					} else if ("java.lang.Win32Process".equals(processImplName) || "java.lang.ProcessImpl".equals(processImplName)) {
+						Field f = process.getClass().getDeclaredField("handle");
+						f.setAccessible(true);
+						Kernel32 kernel = Kernel32.INSTANCE;
+						WinNT.HANDLE handle = new WinNT.HANDLE();
+						handle.setPointer(Pointer.createConstant(f.getLong(process)));
+						return (long)kernel.GetProcessId(handle);
+					}
+					return null;
+				} catch (Exception e) {
+					e.printStackTrace();
+					return null;
+				}
+			case "RELEASE_9":
+				try {
+					return ((Number)Process.class.getMethod("getPid").invoke(process)).longValue();
+				} catch (Exception e) {
+					e.printStackTrace();
+					return null;
+				}
+			default:
+				try {
+					return ((Number)Process.class.getMethod("pid").invoke(process)).longValue();
+				} catch (Exception e) {
+					e.printStackTrace();
+					return null;
+				}
+		}
 	}
 	
 	/**
