@@ -74,9 +74,9 @@ export PATH LOGCOLLECTOR_HOME
 |defaultFilter|ETL通道默认过滤器|用于接收上游通道文本数据，并将其过滤后的文本发送到下游通道|
 |fileManual|本地文件离线收集器|用于离线读取本地文件系统中的文本数据，并将其发送到下游通道|
 |fileRealtime|本地文件实时收集器|用于实时读取本地文件系统中的文本数据，并将其发送到下游通道|
-|mongoSink|MongoDB服务发送器|用于将通道接收到的数据发送到MongoDB服务器，支持认证和会话跟踪|
-|httpTransfer|Web服务实时转存器|用于实时读取Web端口数据，并将其转存到本地缓冲目录或发送到下游通道|
-|mqttTransfer|Mqtt服务实时转存器|用于实时读取Mqtt端口数据，并将其转存到本地缓冲目录或发送到下游通道|
+|mdbSink|MongoDB服务发送器|用于将通道接收到的数据发送到MongoDB服务器，支持认证和会话跟踪|
+|httpTransfer|Web服务实时转存器|用于实时读取Web端口数据，并将其转存到本地目录或发送到下游通道|
+|mqttTransfer|Mqtt服务实时转存器|用于实时读取Mqtt端口数据，并将其转存到本地目录或发送到下游通道|
 |fileTransfer|本地文件实时转存器|用于实时读取本地系统数据，并将其转存到本地目录或发送到下游通道|
 ​    
 ### 应用流程设计    
