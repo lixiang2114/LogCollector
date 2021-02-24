@@ -9,7 +9,7 @@ LogCollector是基于应用日志流程的一套ETL工具和服务组件，同�
       
 ### 产品安装部署  
 1. 下载与安装  
-wget https://github.com/lixiang2114/Software/blob/main/LogCollector-2.0.zip -P /install/zip/    
+wget https://github.com/lixiang2114/Software/raw/main/LogCollector-2.0.zip -P /install/zip/    
 unzip /install/zip/LogCollector-2.0.zip -d /software/  
 ##### 备注：  
 本套产品支持在Windows系统上安装部署和使用，在Windows上的安装和Linux上的安装类同，都是解压即用模式，如：解压到D盘根目录可以执行： unzip LogCollector-2.0.zip -d  D:/software/  
@@ -122,6 +122,9 @@ flowList=fileToFile
 
 ​    
 ### 应用插件开发    
+上述应用插件可以在插件库中找到，插件的下载地址为：https://github.com/lixiang2114/LogCollector-Plugins  
+所有的LogCollector插件都是向后兼容的，如果你在插件库中没有找到你需要的插件，那么强烈建议你自行开发并贡献插件到此插件库中，以便于其它有跟你具有相同需求的人也能使用你写的插件，开源的项目只有共建共享才具有旺盛的生命力；如果你有贡献插件的想法请加我QQ：153082011
+​    
 #### 发送器Sink插件开发步骤  
 1. 创建Maven工程并引入以下依赖项
 ```Text
