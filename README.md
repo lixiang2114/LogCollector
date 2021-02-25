@@ -77,7 +77,9 @@ export PATH LOGCOLLECTOR_HOME
 |mongoSink|MongoDB服务发送器|用于将通道接收到的数据发送到MongoDB服务器，支持认证和会话跟踪|
 |httpTransfer|Web服务实时转存器|用于实时读取Web端口数据，并将其转存到本地目录或发送到下游通道|
 |mqttTransfer|Mqtt服务实时转存器|用于实时读取Mqtt端口数据，并将其转存到本地目录或发送到下游通道|
-|fileTransfer|本地文件实时转存器|用于实时读取本地系统数据，并将其转存到本地目录或发送到下游通道|
+|fileTransfer|本地文件实时转存器|用于实时读取本地系统数据，并将其转存到本地目录或发送到下游通道|  
+##### 备注：  
+更多插件介绍请参考插件库：https://github.com/lixiang2114/LogCollector-Plugins
 ​    
 ### 应用流程设计    
 #### 定义流程目录及配置文件  
