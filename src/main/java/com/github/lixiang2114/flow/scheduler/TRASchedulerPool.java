@@ -141,7 +141,7 @@ public class TRASchedulerPool extends SchedulerPool{
 		}
 		
 		Context.traSchedulerStart=false;
-		traScheduerFuture.cancel(true);
+		if(null!=traScheduerFuture) traScheduerFuture.cancel(true);
 		
 		log.info("stop tra flows complete...");
 		return "stop tra flows complete...";
@@ -170,7 +170,7 @@ public class TRASchedulerPool extends SchedulerPool{
 	 */
 	public static final Boolean stopTRAScheduler(){
 		Context.traSchedulerStart=false;
-		traScheduerFuture.cancel(true);
+		if(null!=traScheduerFuture) traScheduerFuture.cancel(true);
 		return true;
 	}
 }
