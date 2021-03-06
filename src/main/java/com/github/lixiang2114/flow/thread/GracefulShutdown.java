@@ -14,16 +14,28 @@ public class GracefulShutdown extends Thread{
 	
 	@Override
 	public void run() {
-		TRASchedulerPool.gracefulStopAllTRAs();
-		TRASchedulerPool.stopTRAScheduler();
+		try{
+			TRASchedulerPool.gracefulStopAllTRAs();
+			TRASchedulerPool.stopTRAScheduler();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+
+		try{
+			ETLSchedulerPool.gracefulStopAllETLs();
+			ETLSchedulerPool.stopETLScheduler();
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
 		
-		ETLSchedulerPool.gracefulStopAllETLs();
-		ETLSchedulerPool.stopETLScheduler();
+		try{
+			TRASchedulerPool.destoryTRAPool();
+			ETLSchedulerPool.destoryETLPool();
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
 		
 		ThreadPoolTaskExecutor taskExecutor=SchedulerPool.getTaskExecutor();
 		if(null!=taskExecutor) taskExecutor.destroy();
-		
-		TRASchedulerPool.destoryTRAPool();
-		ETLSchedulerPool.destoryETLPool();
 	}
 }

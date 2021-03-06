@@ -42,7 +42,12 @@ public class TRACaller implements Callable<Object>{
 				log.warn("flow: {} is not running yet,it will be killing...",flow.compName);
 				
 				flow.transferStart=false;
-				traFuture.transferFuture.cancel(true);
+				
+				try{
+					traFuture.transferFuture.cancel(true);
+				}catch(Exception e) {
+					log.warn("cancel transferFuture occue error:",e);
+				}
 				
 				try {
 					flow.transfer.callFace("checkPoint",new Object[]{null});

@@ -106,9 +106,23 @@ public class ETLSchedulerPool extends SchedulerPool{
 		flow.filterStart=false;
 		flow.sinkStart=false;
 		
-		if(null!=etlFuture.sourceFuture)etlFuture.sourceFuture.cancel(true);
-		if(null!=etlFuture.filterFuture) etlFuture.filterFuture.cancel(true);
-		if(null!=etlFuture.sinkFuture) etlFuture.sinkFuture.cancel(true);
+		try{
+			if(null!=etlFuture.sourceFuture)etlFuture.sourceFuture.cancel(true);
+		}catch(Exception e){
+			log.error("cancel sourceFuture occur error:",e);
+		}
+		
+		try{
+			if(null!=etlFuture.filterFuture) etlFuture.filterFuture.cancel(true);
+		}catch(Exception e){
+			log.error("cancel filterFuture occur error:",e);
+		}
+		
+		try{
+			if(null!=etlFuture.sinkFuture) etlFuture.sinkFuture.cancel(true);
+		}catch(Exception e){
+			log.error("cancel sinkFuture occur error:",e);
+		}
 		
 		etlFuture.isStarted=false;
 		log.info("stop flow {} complete...",flowName);
@@ -130,9 +144,23 @@ public class ETLSchedulerPool extends SchedulerPool{
 			flow.filterStart=false;
 			flow.sinkStart=false;
 			
-			if(null!=etlFuture.sourceFuture)etlFuture.sourceFuture.cancel(true);
-			if(null!=etlFuture.filterFuture) etlFuture.filterFuture.cancel(true);
-			if(null!=etlFuture.sinkFuture) etlFuture.sinkFuture.cancel(true);
+			try{
+				if(null!=etlFuture.sourceFuture)etlFuture.sourceFuture.cancel(true);
+			}catch(Exception e){
+				log.error("cancel sourceFuture occur error:",e);
+			}
+			
+			try{
+				if(null!=etlFuture.filterFuture) etlFuture.filterFuture.cancel(true);
+			}catch(Exception e){
+				log.error("cancel filterFuture occur error:",e);
+			}
+			
+			try{
+				if(null!=etlFuture.sinkFuture) etlFuture.sinkFuture.cancel(true);
+			}catch(Exception e){
+				log.error("cancel sinkFuture occur error:",e);
+			}
 			
 			etlFuture.isStarted=false;
 		}
@@ -167,7 +195,12 @@ public class ETLSchedulerPool extends SchedulerPool{
 	 */
 	public static final Boolean stopETLScheduler(){
 		Context.etlSchedulerStart=false;
-		etlScheduerFuture.cancel(true);
-		return true;
+		try{
+			etlScheduerFuture.cancel(true);
+			return true;
+		}catch(Exception e){
+			log.error("cancel etlScheduerFuture occur error:",e);
+			return false;
+		}
 	}
 }

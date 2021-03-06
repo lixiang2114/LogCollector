@@ -103,7 +103,12 @@ public class TRASchedulerPool extends SchedulerPool{
 		
 		Flow flow=traFuture.flow;
 		flow.transferStart=false;
-		if(null!=traFuture.transferFuture)traFuture.transferFuture.cancel(true);
+		
+		try{
+			if(null!=traFuture.transferFuture) traFuture.transferFuture.cancel(true);
+		}catch(Exception e){
+			log.error("cancel transferFuture occur error:",e);
+		}
 		
 		try {
 			Object result=flow.transfer.callFace("stop", new Object[]{null});
@@ -128,7 +133,12 @@ public class TRASchedulerPool extends SchedulerPool{
 			
 			flow=traFuture.flow;
 			flow.transferStart=false;
-			if(null!=traFuture.transferFuture)traFuture.transferFuture.cancel(true);
+			
+			try{
+				if(null!=traFuture.transferFuture) traFuture.transferFuture.cancel(true);
+			}catch(Exception e) {
+				log.error("cancel transferFuture occur error:",e);
+			}
 			
 			try {
 				Object result=flow.transfer.callFace("stop", new Object[]{null});
@@ -141,14 +151,18 @@ public class TRASchedulerPool extends SchedulerPool{
 		}
 		
 		Context.traSchedulerStart=false;
-		if(null!=traScheduerFuture) traScheduerFuture.cancel(true);
+		try{
+			if(null!=traScheduerFuture) traScheduerFuture.cancel(true);
+		}catch(Exception e) {
+			log.error("cancel traScheduerFuture occur error:",e);
+		}
 		
 		log.info("stop tra flows complete...");
 		return "stop tra flows complete...";
 	}
 	
 	/**
-	 * 启动Flow流程调度器
+	 * 启动TRA流程调度器
 	 * 当某个流程中的某个插件遇到异常或错误时将终止整个流程
 	 */
 	public static final Boolean startTRAScheduler(){
@@ -166,11 +180,16 @@ public class TRASchedulerPool extends SchedulerPool{
 	}
 	
 	/**
-	 * 停止Flow流程调度器
+	 * 停止TRA流程调度器
 	 */
 	public static final Boolean stopTRAScheduler(){
 		Context.traSchedulerStart=false;
-		if(null!=traScheduerFuture) traScheduerFuture.cancel(true);
-		return true;
+		try{
+			if(null!=traScheduerFuture) traScheduerFuture.cancel(true);
+			return true;
+		}catch(Exception e) {
+			log.error("cancel traScheduerFuture occur error:",e);
+			return false;
+		}
 	}
 }

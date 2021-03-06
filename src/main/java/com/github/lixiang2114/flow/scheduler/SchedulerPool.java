@@ -19,10 +19,8 @@ public abstract class SchedulerPool {
 	 * 获取Spring线程池执行器
 	 * @return 线程池执行器
 	 */
-	public static final ThreadPoolTaskExecutor getTaskExecutor(){
-		if(null==taskExecutor) {
-			taskExecutor=SpringThreadPool.getSpringThreadPool();
-		}
-		return taskExecutor;
+	public synchronized static final ThreadPoolTaskExecutor getTaskExecutor(){
+		if(null!=taskExecutor) return taskExecutor;
+		return taskExecutor=SpringThreadPool.getSpringThreadPool();
 	}
 }
