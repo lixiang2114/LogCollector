@@ -94,6 +94,11 @@ public class CommonUtil {
      * 单双引号集合
      */
 	public static final List<Character> QUOTATIONS=Arrays.asList('\'','"');
+	
+	 /**
+     * 整数正则式
+     */
+	public static final Pattern INTEGER_CHARACTER=Pattern.compile("[0-9]+");
     
     /**
      * 数字正则式
@@ -198,6 +203,16 @@ public class CommonUtil {
     	if(Number.class.isAssignableFrom(type)) return true;
     	if(boolean.class==type || char.class==type || void.class==type) return false;
     	return BASE_TO_WRAP.containsKey(type);
+    }
+    
+    /**
+     * 指定字串是否为整数串
+     * @param type 类型
+     * @return 是否为整数串
+     */
+    public static boolean isInteger(String string){
+    	if(isEmpty(string)) return false;
+    	return INTEGER_CHARACTER.matcher(string).matches();
     }
     
     /**
