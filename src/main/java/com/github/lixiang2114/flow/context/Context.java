@@ -27,11 +27,11 @@ import com.github.lixiang2114.flow.util.PropertiesReader;
 
 /**
  * @author Lixiang
- * @description 日志收集器上下文
+ * @description 日志系统上下文
  */
 public class Context {
 	/**
-	 * 收集器Home目录
+	 * 系统Home目录
 	 */
 	public static File projectFile;
 	
@@ -63,7 +63,7 @@ public class Context {
 	/**
 	 * 类装载器
 	 */
-	private static ClassLoader classLoader;
+	public static ClassLoader classLoader;
 	
 	/**
 	 * 是否需要检查插件实现相应接口
@@ -187,13 +187,13 @@ public class Context {
 			return;
 		}
 		
-		File pluginConf=new File(projectFile,"flows/"+flowName+"/"+flowName+".properties");
-		if(!pluginConf.exists()){
+		File flowFile=new File(projectFile,"flows/"+flowName+"/"+flowName+".properties");
+		if(!flowFile.exists()){
 			log.error("flow instance not defined for: {}...",flowName);
 			return;
 		}
 		
-		Properties flowConfig=PropertiesReader.getProperties(pluginConf);
+		Properties flowConfig=PropertiesReader.getProperties(flowFile);
 		String sinkName=flowConfig.getProperty(PluginType.sink.name, Default.SINK).trim();
 		String filterName=flowConfig.getProperty(PluginType.filter.name, Default.Filter).trim();
 		String sourceName=flowConfig.getProperty(PluginType.source.name, Default.SOURCE).trim();

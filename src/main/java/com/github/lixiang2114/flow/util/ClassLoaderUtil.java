@@ -10,6 +10,18 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Locale;
+
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+
+import com.sun.source.util.JavacTask;
+import com.sun.tools.javac.api.JavacTool;
 
 /**
  * @author Lixiang
@@ -511,5 +523,123 @@ public class ClassLoaderUtil{
 		
 		if(null==classLoader) return null;
 		return classLoader.loadClass(className.trim());
+	}
+	
+	/**
+	 * 编译Java源文件
+	 * @param srcPath 源文件根目录
+	 * @param classPaths 引用的第三方类路径
+	 * @return 是否编译成功,若编译失败则标准输出错误信息
+	 */
+	public static final boolean compileJavaSource(File srcPath,File... classPaths) {
+		return compileJavaSource(srcPath,null,null,null,classPaths);
+	}
+	
+	/**
+	 * 编译Java源文件
+	 * @param srcPath 源文件根目录
+	 * @param binPath 类文件根目录
+	 * @param classPaths 引用的第三方类路径
+	 * @return 是否编译成功,若编译失败则标准输出错误信息
+	 */
+	public static final boolean compileJavaSource(File srcPath,File binPath,File... classPaths) {
+		return compileJavaSource(srcPath,binPath,null,null,classPaths);
+	}
+	
+	/**
+	 * 编译Java源文件
+	 * @param srcPath 源文件根目录
+	 * @param binPath 类文件根目录
+	 * @param locale 编译系统操作语言
+	 * @param charset 编译源文件字符编码
+	 * @param classPaths 引用的第三方类路径
+	 * @return 是否编译成功,若编译失败则标准输出错误信息
+	 * @description 调用本方法前必须将JDK环境下的tools.jar加入类路径
+	 */
+	public static final boolean compileJavaSource(File srcPath,File binPath,Locale locale,String charset,File... classPaths) {
+		String[] srcPathList=getJavaSourceFiles(srcPath);
+		if(null==srcPathList) return false;
+		
+		if(null==binPath) binPath=new File(srcPath.getParentFile(),"bin");
+		if(!binPath.exists()) binPath.mkdirs();
+		
+		if(null==locale) locale=Locale.CHINA;
+		if(null==charset || 0==charset.trim().length()) charset="UTF-8";
+		
+		String classPath=".";
+		if(null!=classPaths) {
+			StringBuilder builder=new StringBuilder("");
+			char pathSep=CommonUtil.getOSType().toLowerCase().startsWith("win")?';':':';
+			for(int i=0;i<classPaths.length;builder.append(getJarPath(classPaths[i++],pathSep)));
+			if(0!=builder.length()) {
+				builder.deleteCharAt(builder.length()-1);
+				classPath=classPath+pathSep+builder.toString();
+			}
+		}
+		
+		JavacTool javac=JavacTool.create();
+		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+		StandardJavaFileManager fileManager = javac.getStandardFileManager(diagnostics, locale, Charset.forName(charset));
+		Iterable<String> options = Arrays.asList("-encoding", charset, "-classpath",classPath, "-d", binPath.getAbsolutePath(), "-sourcepath", srcPath.getAbsolutePath());
+		
+		Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjects(srcPathList);
+		JavacTask javacTask = javac.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
+		if(javacTask.call()) return true;
+		
+		for (Diagnostic<?> diagnostic : diagnostics.getDiagnostics()) {
+			String level=diagnostic.getKind().toString();
+			Long lineNum=diagnostic.getLineNumber();
+			String message=diagnostic.getMessage(locale);
+			Long columnNum=diagnostic.getColumnNumber();
+			System.out.println("level: "+level+",lineNum: "+lineNum+",columnNum: "+columnNum+",message: "+message);
+         }
+		return false;
+	}
+	
+	/**
+	 * 获取JAR路径列表
+	 * @param jarPath JAR路径
+	 * @param pathSep 类路径分隔符
+	 * @return 源文件列表(以pathSep结尾)
+	 */
+	private static final String getJarPath(File jarPath,char pathSep) {
+		if(null==jarPath || jarPath.isFile()) return null;
+		
+		File[] subFiles=jarPath.listFiles();
+		StringBuilder pathBuilder=new StringBuilder("");
+		
+		for(File subFile:subFiles) {
+			if(subFile.isDirectory()) {
+				pathBuilder.append(getJarPath(subFile,pathSep));
+				continue;
+			}
+			String fileFullPath=subFile.getAbsolutePath();
+			if(fileFullPath.endsWith(".jar")) pathBuilder.append(fileFullPath).append(pathSep);
+		}
+		
+		return pathBuilder.toString();
+	}
+	
+	/**
+	 * 获取JAVA源文件列表
+	 * @param src 源文件目录
+	 * @return 源文件列表
+	 */
+	public static final String[] getJavaSourceFiles(File src) {
+		if(null==src || src.isFile()) return null;
+		
+		File[] subFiles=src.listFiles();
+		ArrayList<String> pathList=new ArrayList<String>();
+		
+		for(File subFile:subFiles) {
+			if(subFile.isDirectory()) {
+				pathList.addAll(Arrays.asList(getJavaSourceFiles(subFile)));
+				continue;
+			}
+			String fileFullPath=subFile.getAbsolutePath();
+			if(fileFullPath.endsWith(".java")) pathList.add(fileFullPath);
+		}
+		
+		return pathList.toArray(new String[pathList.size()]);
 	}
 }
