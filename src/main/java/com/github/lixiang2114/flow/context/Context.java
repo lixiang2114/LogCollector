@@ -94,8 +94,8 @@ public class Context {
 		PLUG_TYPE_TO_FACE.put("sink", SinkPlugin.class);
 		PLUG_TYPE_TO_FACE.put("filter", FilterPlugin.class);
 		PLUG_TYPE_TO_FACE.put("source", SourcePlugin.class);
-		PLUG_TYPE_TO_FACE.put("transfer", TransferPlugin.class);
 		PLUG_TYPE_TO_FACE.put("manual", ManualPlugin.class);
+		PLUG_TYPE_TO_FACE.put("transfer", TransferPlugin.class);
 		PLUG_TYPE_TO_FACE.put("realtime", RealtimePlugin.class);
 	}
 	
@@ -194,20 +194,26 @@ public class Context {
 		}
 		
 		Properties flowConfig=PropertiesReader.getProperties(flowFile);
+		
 		String sinkName=flowConfig.getProperty(PluginType.sink.name, Default.SINK).trim();
 		String filterName=flowConfig.getProperty(PluginType.filter.name, Default.Filter).trim();
-		String sourceName=flowConfig.getProperty(PluginType.source.name, Default.SOURCE).trim();
-		boolean realTime=Boolean.parseBoolean(flowConfig.getProperty("realTime", Default.ETL_MODE).trim());
-		boolean clearCache=Boolean.parseBoolean(flowConfig.getProperty("clearCache", Default.CLEAR_CACHE).trim());
 		
-		Plugin sink=loadPlugin(sinkName,PluginType.sink,classLoader);
-		Plugin filter=loadPlugin(filterName,PluginType.filter,classLoader);
+		Plugin sink=loadPlugin(sinkName.isEmpty()?Default.SINK:sinkName,PluginType.sink,classLoader);
+		Plugin filter=loadPlugin(filterName.isEmpty()?Default.Filter:filterName,PluginType.filter,classLoader);
+		
+		String realTimeStr=flowConfig.getProperty("realTime", Default.ETL_MODE).trim();
+		boolean realTime=Boolean.parseBoolean(realTimeStr.isEmpty()?Default.ETL_MODE:realTimeStr);
+		
+		String clearCacheStr=flowConfig.getProperty("clearCache", Default.CLEAR_CACHE).trim();
+		boolean clearCache=Boolean.parseBoolean(clearCacheStr.isEmpty()?Default.CLEAR_CACHE:clearCacheStr);
 		
 		Plugin source=null;
 		if(realTime){
-			source=loadPlugin(sourceName,PluginType.realtime,classLoader);
+			String sourceName=flowConfig.getProperty(PluginType.source.name, Default.REALTIME).trim();
+			source=loadPlugin(sourceName.isEmpty()?Default.REALTIME:sourceName,PluginType.realtime,classLoader);
 		}else{
-			source=loadPlugin(sourceName,PluginType.manual,classLoader);
+			String sourceName=flowConfig.getProperty(PluginType.source.name, Default.MANUAL).trim();
+			source=loadPlugin(sourceName.isEmpty()?Default.MANUAL:sourceName,PluginType.manual,classLoader);
 		}
 		
 		if(null==sink || null==filter || null==source){
@@ -220,10 +226,12 @@ public class Context {
 		if(!transferName.isEmpty()) transfer=loadPlugin(transferName,PluginType.transfer,classLoader);
 		
 		Flow flow=new Flow(flowName,sink,filter,source,transfer,clearCache);
-		flow.channelMaxSize=Integer.valueOf(flowConfig.getProperty("channelMaxSize", Default.CHANNEL_MAX_SIZE).trim());
-		flow.transferToSourceChannel=new Channel<Object>(flow.channelMaxSize);
-		flow.sourceToFilterChannel=new Channel<Object>(flow.channelMaxSize);
+		String channelMaxSizeStr=flowConfig.getProperty("channelMaxSize", Default.CHANNEL_MAX_SIZE).trim();
+		flow.channelMaxSize=Integer.valueOf(channelMaxSizeStr.isEmpty()?Default.CHANNEL_MAX_SIZE:channelMaxSizeStr);
+		
 		flow.filterToSinkChannel=new Channel<Object>(flow.channelMaxSize);
+		flow.sourceToFilterChannel=new Channel<Object>(flow.channelMaxSize);
+		flow.transferToSourceChannel=new Channel<Object>(flow.channelMaxSize);
 		
 		FLOW_DICT.put(flowName, flow);
 		
@@ -241,13 +249,23 @@ public class Context {
 		
 		classLoader=Thread.currentThread().getContextClassLoader();
 		Properties contextConfig=PropertiesReader.getProperties("context.properties");
-		initOnStart=Boolean.parseBoolean(contextConfig.getProperty("loadMode", Default.LOAD_MODE).trim());
-		checkPluginFace=Boolean.parseBoolean(contextConfig.getProperty("checkPluginFace", Default.CHECK_PLUGIN_FACE).trim());
-		etlSchedulerInterval=Long.parseLong(contextConfig.getProperty("etlSchedulerInterval", Default.ETL_SCHEDULER_INTERVAL).trim());
-		traSchedulerInterval=Long.parseLong(contextConfig.getProperty("traSchedulerInterval", Default.TRA_SCHEDULER_INTERVAL).trim());
+		
+		String loadModeStr=contextConfig.getProperty("loadMode", Default.LOAD_MODE).trim();
+		initOnStart=Boolean.parseBoolean(loadModeStr.isEmpty()?Default.LOAD_MODE:loadModeStr);
+		
+		String checkPluginFaceStr=contextConfig.getProperty("checkPluginFace", Default.CHECK_PLUGIN_FACE).trim();
+		checkPluginFace=Boolean.parseBoolean(checkPluginFaceStr.isEmpty()?Default.CHECK_PLUGIN_FACE:checkPluginFaceStr);
+		
+		String etlSchedulerIntervalStr=contextConfig.getProperty("etlSchedulerInterval", Default.ETL_SCHEDULER_INTERVAL).trim();
+		etlSchedulerInterval=Long.parseLong(etlSchedulerIntervalStr.isEmpty()?Default.ETL_SCHEDULER_INTERVAL:etlSchedulerIntervalStr);
+		
+		String traSchedulerIntervalStr=contextConfig.getProperty("traSchedulerInterval", Default.TRA_SCHEDULER_INTERVAL).trim();
+		traSchedulerInterval=Long.parseLong(traSchedulerIntervalStr.isEmpty()?Default.TRA_SCHEDULER_INTERVAL:traSchedulerIntervalStr);
+		
+		String flowListStr=contextConfig.getProperty("flowList", Default.FLOWS).trim();
+		String[] flowList=COMMA_REGEX.split(flowListStr.isEmpty()?Default.FLOWS:flowListStr);
 		
 		log.info("load flow context start...");
-		String[] flowList=COMMA_REGEX.split(contextConfig.getProperty("flowList", Default.FLOWS).trim());
 		for(String flowName:flowList) loadFlow(flowName);
 		log.info("load flow context complete...");
 		

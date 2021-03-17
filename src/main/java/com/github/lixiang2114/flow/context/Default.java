@@ -21,30 +21,35 @@ public class Default {
 	public static final String LOAD_MODE="true";
 	
 	/**
+	 * 默认Sink插件
+	 */
+	public static final String SINK="fileSink";
+	
+	/**
 	 * 默认Filter过滤器
 	 */
 	public static final String Filter="defaultFilter";
 	
 	/**
-	 * 默认Sink插件
+	 * 默认Manual插件
 	 */
-	public static final String SINK="emqxSink";
+	public static final String MANUAL="fileManual";
 	
 	/**
-	 * 默认Source插件
+	 * 默认Realtime插件
 	 */
-	public static final String SOURCE="fileSource";
+	public static final String REALTIME="fileRealtime";
+	
+	/**
+	 * 默认Transfer插件
+	 */
+	public static final String TRANSFER="fileTransfer";
 	
 	/**
 	 * 默认的ETL流程列表(多个流程名称间使用英文逗号分隔)
 	 */
-	public static final String FLOWS="fileToEmqx";
+	public static final String FLOWS="fileToFile";
 
-	/**
-	 * 默认的过滤器列表(多个过滤器名称间使用英文逗号分隔)
-	 */
-	public static final String FILTERS="defaultFilter";
-	
 	/**
 	 *  启动流程调度器(true:启动,false:停止)
 	 */
@@ -69,9 +74,4 @@ public class Default {
 	 *  转存流程调度间隔时间(单位:毫秒)
 	 */
 	public static final String TRA_SCHEDULER_INTERVAL="1000";
-	
-	/**
-	 * 默认的插件列表(多个插件名称间使用英文逗号分隔)
-	 */
-	public static final String PLUGINS="fileSource,defaultFilter,emqxSink";
 }
