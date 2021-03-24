@@ -174,11 +174,27 @@ public class SpringThreadPool {
 	}
 	
 	/**
+	 * 获取Spring默认线程池
+	 * 扩展为无缓冲队列线程池
+	 * @return 线程池
+	 */
+	public static ThreadPoolTaskExecutor getSpringThreadPool(Integer... poolSizes) {
+		ThreadPoolTaskExecutor taskExecutor=getSpringContextThreadPool(ThreadPoolTaskExecutor.class);
+		taskExecutor.setQueueCapacity(0);
+		if(null!=poolSizes) {
+			if(0<poolSizes.length && null!=poolSizes[0]) taskExecutor.setCorePoolSize(poolSizes[0]);
+			if(1<poolSizes.length && null!=poolSizes[1]) taskExecutor.setMaxPoolSize(poolSizes[1]);
+		}
+		taskExecutor.initialize();
+		return taskExecutor;
+	}
+	
+	/**
 	 * 获取Spring上下文中第一个兼容的线程池
 	 * @param threadPoolType 兼容的线程池类型
 	 * @return 线程池
 	 */
-	public static <R extends Executor> R getSpringThreadPool(Class<R>... threadPoolType){
+	public static <R extends Executor> R getSpringContextThreadPool(Class<R>... threadPoolType){
 		Class<R> poolType=null==threadPoolType||0==threadPoolType.length?(Class<R>)ThreadPoolTaskExecutor.class:threadPoolType[0];
 		Map<String, R> executors=ApplicationUtil.getBeansOfType(poolType);
 		if(null==executors||0==executors.size()) return null;

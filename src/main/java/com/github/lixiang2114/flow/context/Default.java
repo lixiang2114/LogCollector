@@ -16,9 +16,9 @@ public class Default {
 	public static final String CLEAR_CACHE="false";
 	
 	/**
-	 * 上下文配置装载模式(true:启动时装载,false:运行时装载)
+	 * 流程初始化模式(true:启动时初始化,false:运行时初始化)
 	 */
-	public static final String LOAD_MODE="true";
+	public static final String INIT_ON_START="true";
 	
 	/**
 	 * 默认Sink插件

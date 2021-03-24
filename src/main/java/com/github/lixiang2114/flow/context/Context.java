@@ -1,6 +1,7 @@
 package com.github.lixiang2114.flow.context;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,9 +37,34 @@ public class Context {
 	public static File projectFile;
 	
 	/**
-	 * 当服务启动时是否初始化应用上下文
+	 * 流程名称列表
 	 */
-	public static Boolean initOnStart;
+	public static String[] flowList;
+	
+	/**
+	 * 核心线程数量
+	 */
+	public static Integer coreThreads;
+	
+	/**
+	 * 当服务启动时是否初始化流程
+	 */
+	public static boolean initOnStart;
+	
+	/**
+	 * 是否已经装载过所有流程
+	 */
+	public static boolean flowsLoaded;
+	
+	/**
+	 * 类装载器
+	 */
+	public static ClassLoader classLoader;
+	
+	/**
+	 * 是否需要检查插件实现相应接口
+	 */
+	public static Boolean checkPluginFace;
 	
 	/**
 	 * 是否启动ETL进程组调度器
@@ -59,16 +85,6 @@ public class Context {
 	 * TRA进程组调度时间间隔(单位:毫秒)
 	 */
 	public static Long traSchedulerInterval;
-	
-	/**
-	 * 类装载器
-	 */
-	public static ClassLoader classLoader;
-	
-	/**
-	 * 是否需要检查插件实现相应接口
-	 */
-	public static Boolean checkPluginFace;
 	
 	/**
 	 * 英文逗号正则式
@@ -134,6 +150,7 @@ public class Context {
 		HashMap<String,Object> map=new HashMap<String,Object>();
 		map.put("projectFile", projectFile);
 		map.put("initOnStart", initOnStart);
+		map.put("flowList", Arrays.toString(flowList));
 		return map.toString();
 	}
 	
@@ -239,19 +256,40 @@ public class Context {
 	}
 	
 	/**
-	 * 装载应用上下文
+	 * 装载应用上下文实例
 	 * @throws Exception 
 	 */
-	public static final void loadContext() throws Exception {
+	public static final void loadAppContext() throws Exception {
 		log.info("load application context start...");
+		
 		projectFile=ApplicationUtil.getProjectPath();
 		if(null==projectFile) return;
 		
+		Runtime.getRuntime().addShutdownHook(new GracefulShutdown());
 		classLoader=Thread.currentThread().getContextClassLoader();
+		generateAppPidFile();
+		
+		log.info("load application context complete...");
+	}
+	
+	/**
+	 * 装载流程上下文实例
+	 * @throws Exception
+	 */
+	public static final void loadFlowContext(String startTip,String endTip) throws Exception {
+		log.info(startTip);
+		
+		flowsLoaded=false;
 		Properties contextConfig=PropertiesReader.getProperties("context.properties");
 		
-		String loadModeStr=contextConfig.getProperty("loadMode", Default.LOAD_MODE).trim();
-		initOnStart=Boolean.parseBoolean(loadModeStr.isEmpty()?Default.LOAD_MODE:loadModeStr);
+		String flowListStr=contextConfig.getProperty("flowList", Default.FLOWS).trim();
+		flowList=COMMA_REGEX.split(flowListStr.isEmpty()?Default.FLOWS:flowListStr);
+		
+		String coreThreadStr=contextConfig.getProperty("coreThreads","").trim();
+		coreThreads=coreThreadStr.isEmpty()?3*flowList.length:Integer.parseInt(coreThreadStr);
+		
+		String initOnStartStr=contextConfig.getProperty("initOnStart", Default.INIT_ON_START).trim();
+		initOnStart=Boolean.parseBoolean(initOnStartStr.isEmpty()?Default.INIT_ON_START:initOnStartStr);
 		
 		String checkPluginFaceStr=contextConfig.getProperty("checkPluginFace", Default.CHECK_PLUGIN_FACE).trim();
 		checkPluginFace=Boolean.parseBoolean(checkPluginFaceStr.isEmpty()?Default.CHECK_PLUGIN_FACE:checkPluginFaceStr);
@@ -262,22 +300,14 @@ public class Context {
 		String traSchedulerIntervalStr=contextConfig.getProperty("traSchedulerInterval", Default.TRA_SCHEDULER_INTERVAL).trim();
 		traSchedulerInterval=Long.parseLong(traSchedulerIntervalStr.isEmpty()?Default.TRA_SCHEDULER_INTERVAL:traSchedulerIntervalStr);
 		
-		String flowListStr=contextConfig.getProperty("flowList", Default.FLOWS).trim();
-		String[] flowList=COMMA_REGEX.split(flowListStr.isEmpty()?Default.FLOWS:flowListStr);
-		
-		log.info("load flow context start...");
-		for(String flowName:flowList) loadFlow(flowName);
-		log.info("load flow context complete...");
-		
-		Runtime.getRuntime().addShutdownHook(new GracefulShutdown());
-		log.info("load application context complete...");
+		log.info(endTip);
 	}
 	
 	/**
 	 * 输出JVM进程ID文件
 	 * @throws Exception 
 	 */
-	public static final void generatePidFile() throws Exception {
+	private static final void generateAppPidFile() throws Exception {
 		Integer processID=ApplicationUtil.getJvmProcessID();
 		if(null==processID) return;
 		File pidFile=new File(projectFile,"logs/pid");

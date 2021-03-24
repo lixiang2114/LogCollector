@@ -151,6 +151,7 @@ public class Flow extends Comp{
 		
 		if(clearCache){
 			log.info("clear ETL plugin cache for flow instance: {}...",flowName);
+			FileUtil.dropFile(new File(super.compPath,"share"));
 			FileUtil.dropFile(new File(super.compPath,sink.compName));
 			FileUtil.dropFile(new File(super.compPath,filter.compName));
 			FileUtil.dropFile(new File(super.compPath,source.compName));

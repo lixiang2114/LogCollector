@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.github.lixiang2114.flow.comps.Flow;
 import com.github.lixiang2114.flow.comps.TRAFuture;
 import com.github.lixiang2114.flow.context.Context;
-import com.github.lixiang2114.flow.scheduler.ETLSchedulerPool;
+import com.github.lixiang2114.flow.scheduler.TRASchedulerPool;
 
 /**
  * @author Lixiang
@@ -24,7 +24,7 @@ public class TRACaller implements Callable<Object>{
 	/**
 	 * 日志工具
 	 */
-	private static final Logger log=LoggerFactory.getLogger(ETLSchedulerPool.class);
+	private static final Logger log=LoggerFactory.getLogger(TRACaller.class);
 	
 	public TRACaller(Collection<TRAFuture> traFutures){
 		TRACaller.traFutures=traFutures;
@@ -44,18 +44,19 @@ public class TRACaller implements Callable<Object>{
 				flow.transferStart=false;
 				
 				try{
-					traFuture.transferFuture.cancel(true);
+					if(null!=traFuture.transferFuture) traFuture.transferFuture.cancel(true);
 				}catch(Exception e) {
 					log.warn("cancel transferFuture occue error:",e);
 				}
 				
 				try {
-					flow.transfer.callFace("checkPoint",new Object[]{null});
+					if(null!=flow.transfer) flow.transfer.callFace("checkPoint",new Object[]{null});
 				} catch (Exception e) {
 					log.error("flow: "+flow.compName+" plugin: "+flow.transfer.compName+" refresh checkpoint error...",e);
 				}
 				
 				traFuture.isStarted=false;
+				TRASchedulerPool.removeTRAFuture(flow.compName);
 			}
 		}
 		return false;

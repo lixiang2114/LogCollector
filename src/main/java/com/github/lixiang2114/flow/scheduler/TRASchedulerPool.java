@@ -74,6 +74,14 @@ public class TRASchedulerPool extends SchedulerPool{
 	}
 	
 	/**
+	 * 参数TRA流程是否处于运行状态
+	 * @return 流程控制句柄
+	 */
+	public static final boolean isRunning(String flowName){
+		return traFutureDict.containsKey(flowName);
+	}
+	
+	/**
 	 * 获取应用流程控制句柄字典
 	 * @return 流程控制句柄字典
 	 */
@@ -94,8 +102,8 @@ public class TRASchedulerPool extends SchedulerPool{
 	 * @param flowName 流程名称
 	 * @return 取消结果信息
 	 */
-	public static final String gracefulStopTRA(String flowName){
-		TRAFuture traFuture=traFutureDict.get(flowName);
+	public static final String gracefulStopTRA(String flowName) {
+		TRAFuture traFuture=traFutureDict.remove(flowName);
 		if(null==traFuture) {
 			log.warn("specify flow: {} is not exists...",flowName);
 			return "specify flow: "+flowName+" is not exists...";
@@ -127,8 +135,10 @@ public class TRASchedulerPool extends SchedulerPool{
 	 */
 	public static final String gracefulStopAllTRAs(){
 		Flow flow=null;
-		Collection<TRAFuture> traFutures=traFutureDict.values();
-		for(TRAFuture traFuture:traFutures){
+		TRAFuture traFuture=null;
+		Enumeration<String> keys=traFutureDict.keys();
+		while(keys.hasMoreElements()) {
+			traFuture=traFutureDict.remove(keys.nextElement());
 			if(null==traFuture) continue;
 			
 			flow=traFuture.flow;

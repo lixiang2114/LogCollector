@@ -35,6 +35,11 @@ public class TRAServiceImpl extends BaseService implements TRAService{
 			return "TRA process is not exists for: "+flowName;
 		}
 		
+		if(TRASchedulerPool.isRunning(flowName)) {
+			log.info("TRA flow: {} is running,no need to start...",flowName);
+			return "TRA flow: "+flowName+" is running,no need to start...";
+		}
+		
 		TRAFuture traFuture=new TRAFuture(flow);
 		ThreadPoolTaskExecutor taskExecutor=SchedulerPool.getTaskExecutor();
 		
@@ -62,12 +67,12 @@ public class TRAServiceImpl extends BaseService implements TRAService{
 		
 		for(Flow flow:flows){
 			if(!flow.hasTransfer) continue;
+			if(TRASchedulerPool.isRunning(flowName=flow.compName)) continue;
 			
 			traFuture=new TRAFuture(flow);
 			startTransfer(traFuture,taskExecutor);
 			
 			traFuture.isStarted=true;
-			flowName=traFuture.flow.compName;
 			TRASchedulerPool.addTRAFuture(flowName, traFuture);
 			
 			log.info("TRA flow: {} is already started...",flowName);

@@ -1,5 +1,7 @@
 package com.github.lixiang2114.flow.controller;
 
+import java.util.Map;
+
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.github.lixiang2114.flow.comps.PluginType;
 import com.github.lixiang2114.flow.context.Context;
+import com.github.lixiang2114.flow.scheduler.SchedulerPool;
 import com.github.lixiang2114.flow.service.ETLService;
 import com.github.lixiang2114.flow.service.TRAService;
 import com.github.lixiang2114.flow.service.impl.BaseService;
@@ -40,20 +43,65 @@ public class AdminController {
 	private static final Logger log=LoggerFactory.getLogger(AdminController.class);
 	
 	@PostConstruct
-	public void init() throws Exception{
-		Context.loadContext();
+	public void init() throws Exception {
+		Context.loadAppContext();
 		if(Context.initOnStart) {
-			startAllFlows();
+			initAllFlows();
 		}else{
-			log.info("initOnStart is: "+Context.initOnStart+",application context will not be initing...");
+			log.info("initOnStart is: "+Context.initOnStart+",all flows will not be initialization...");
 		}
-		Context.generatePidFile();
 	}
 	
+	@RequestMapping(path="/initallflow")
+    public void initAllFlows() throws Exception {
+		log.info("initialization flow context start...");
+		if(Context.flowsLoaded) {
+			log.info("all flows is already loaded...");
+			return;
+		}
+		
+		//装载所有流程
+		loadAllFlows();
+		
+		//启动所有流程
+		startAllFlows();
+		
+		//设置初始化开关
+		Context.flowsLoaded=true;
+		log.info("initialization flow context complete...");
+	}
+	
+	/**
+	 * 装载所有流程实例
+	 * @throws Exception
+	 */
+	@RequestMapping(path="/loadallflow")
+    public void loadAllFlows() throws Exception {
+		Context.loadFlowContext("load flow context start...","load flow context complete...");
+		log.info("load all flow instance start...");
+		for(String flowName:Context.flowList) Context.loadFlow(flowName);
+		log.info("load all flow instance complete...");
+		log.info("Current Thread Pool Arguments Are: {}",SchedulerPool.getPoolParams());
+	}
+	
+	/**
+	 * 关闭系统进程
+	 * @throws Exception
+	 */
 	@RequestMapping(path="/shutdown")
-    public void shudown() throws Exception{
+    public void shudown() throws Exception {
 		log.info("Shutdown LogCollector Server...");
 		Runtime.getRuntime().exit(0);
+	}
+	
+	/**
+	 * dump出系统线程池参数
+	 * @return 线程池参数字典表
+	 * @throws Exception
+	 */
+	@RequestMapping(path="/dumpPoolArgs")
+    public Map<String,Object> dumpPoolParams() throws Exception {
+		return SchedulerPool.getPoolParams();
 	}
 	
 	/**
@@ -63,7 +111,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/startflow/{flowname}")
-    public String startFlow(@PathVariable("flowname") String flowname) throws Exception{
+    public String startFlow(@PathVariable("flowname") String flowname) throws Exception {
 		if(!BaseService.ensureFlowExists(flowname)) return "specify flow: "+flowname+" is not exists!!!";
 		StringBuilder retBuilder=new StringBuilder(startETL(flowname)).append("\n");
 		if(Context.getFlow(flowname).hasTransfer) retBuilder.append(startTRA(flowname)).append("\n");
@@ -77,7 +125,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/stopflow/{flowname}")
-    public String stopFlow(@PathVariable("flowname") String flowname) throws Exception{
+    public String stopFlow(@PathVariable("flowname") String flowname) throws Exception {
 		if(!BaseService.ensureFlowExists(flowname)) return "specify flow: "+flowname+" is not exists!!!";
 		StringBuilder retBuilder=new StringBuilder(stopETL(flowname)).append("\n");
 		if(Context.getFlow(flowname).hasTransfer) retBuilder.append(stopTRA(flowname)).append("\n");
@@ -90,7 +138,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/startflowall")
-    public String startAllFlows() throws Exception{
+    public String startAllFlows() throws Exception {
 		StringBuilder retBuilder=new StringBuilder(startAllETLs()).append("\n");
 		retBuilder.append(startAllTRAs()).append("\n");
 		return retBuilder.toString();
@@ -102,7 +150,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/stopflowall")
-    public String stopAllFlows() throws Exception{
+    public String stopAllFlows() throws Exception {
 		StringBuilder retBuilder=new StringBuilder(stopAllTRAs()).append("\n");
 		retBuilder.append(stopAllETLs()).append("\n");
 		return retBuilder.toString();
@@ -115,7 +163,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/startetl/{flowname}")
-    public String startETL(@PathVariable("flowname") String flowname) throws Exception{
+    public String startETL(@PathVariable("flowname") String flowname) throws Exception {
 		if(BaseService.ensureFlowExists(flowname)) return etlService.startETLProcess(flowname);
 		log.error("unable to load this flow: {}, may be not defined...",flowname);
 		return "unable to load this flow instance: "+flowname+", may be not defined...";
@@ -128,7 +176,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/stopetl/{flowname}")
-    public String stopETL(@PathVariable("flowname") String flowname) throws Exception{
+    public String stopETL(@PathVariable("flowname") String flowname) throws Exception {
 		return etlService.stopETLProcess(flowname);
 	}
 	
@@ -139,7 +187,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/starttra/{flowname}")
-    public String startTRA(@PathVariable("flowname") String flowname) throws Exception{
+    public String startTRA(@PathVariable("flowname") String flowname) throws Exception {
 		if(BaseService.ensureFlowExists(flowname)) return traService.startTRAProcess(flowname);
 		log.error("unable to load this flow: {}, may be not defined...",flowname);
 		return "unable to load this flow instance: "+flowname+", may be not defined...";
@@ -152,7 +200,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/stoptra/{flowname}")
-    public String stopTRA(@PathVariable("flowname") String flowname) throws Exception{
+    public String stopTRA(@PathVariable("flowname") String flowname) throws Exception {
 		return traService.stopTRAProcess(flowname);
 	}
 	
@@ -162,7 +210,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/startetlall")
-    public String startAllETLs() throws Exception{
+    public String startAllETLs() throws Exception {
 		log.info("loop start each etl flow...");
 		return etlService.startAllETLProcess();
 	}
@@ -173,7 +221,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/stopetlall")
-    public String stopAllETLs() throws Exception{
+    public String stopAllETLs() throws Exception {
 		return etlService.stopAllETLProcess();
 	}
 	
@@ -183,7 +231,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/starttraall")
-    public String startAllTRAs() throws Exception{
+    public String startAllTRAs() throws Exception {
 		log.info("loop start each tra flow...");
 		return traService.startAllTRAProcess();
 	}
@@ -194,7 +242,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/stoptraall")
-    public String stopAllTRAs() throws Exception{
+    public String stopAllTRAs() throws Exception {
 		return traService.stopAllTRAProcess();
 	}
 	
@@ -205,7 +253,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/etlcheckpoint")
-    public Object etlCheckpoint(String flowName) throws Exception{
+    public Object etlCheckpoint(String flowName) throws Exception {
 		return etlService.refleshETLCheckpoint(flowName);
 	}
 	
@@ -215,7 +263,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/etlcheckpointall")
-    public Object etlCheckpointAll() throws Exception{
+    public Object etlCheckpointAll() throws Exception {
 		return etlService.refleshAllETLCheckpoint();
 	}
 	
@@ -226,7 +274,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/tracheckpoint")
-    public Object traCheckpoint(String flowName) throws Exception{
+    public Object traCheckpoint(String flowName) throws Exception {
 		return traService.refleshTRACheckpoint(flowName);
 	}
 	
@@ -236,7 +284,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/tracheckpointall")
-    public Object traCheckpointAll() throws Exception{
+    public Object traCheckpointAll() throws Exception {
 		return traService.refleshAllTRACheckpoint();
 	}
 	
@@ -250,7 +298,7 @@ public class AdminController {
 	 * @throws Exception
 	 */
 	@RequestMapping(path="/{flowname}/{plugintype}")
-    public Object status(@PathVariable("flowname") String flowname,@PathVariable("plugintype") String plugintype,String name,String value) throws Exception{
+    public Object status(@PathVariable("flowname") String flowname,@PathVariable("plugintype") String plugintype,String name,String value) throws Exception {
 		if(null==name && null==value) return BaseService.status(flowname, PluginType.valueOf(plugintype));
 		if(null!=name && null==value) return BaseService.status(flowname, PluginType.valueOf(plugintype),name.trim());
 		if(null!=name && null!=value) return BaseService.status(flowname, PluginType.valueOf(plugintype),name.trim(),value.trim());

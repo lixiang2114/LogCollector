@@ -74,6 +74,14 @@ public class ETLSchedulerPool extends SchedulerPool{
 	}
 	
 	/**
+	 * 参数ETL流程是否处于运行状态
+	 * @return 流程控制句柄
+	 */
+	public static final boolean isRunning(String flowName){
+		return etlFutureDict.containsKey(flowName);
+	}
+	
+	/**
 	 * 获取应用流程控制句柄字典
 	 * @return 流程控制句柄字典
 	 */
@@ -95,7 +103,7 @@ public class ETLSchedulerPool extends SchedulerPool{
 	 * @return 取消结果信息
 	 */
 	public static final String gracefulStopETL(String flowName){
-		ETLFuture etlFuture=etlFutureDict.get(flowName);
+		ETLFuture etlFuture=etlFutureDict.remove(flowName);
 		if(null==etlFuture) {
 			log.warn("specify flow: {} is not exists...",flowName);
 			return "specify flow: "+flowName+" is not exists...";
@@ -134,8 +142,10 @@ public class ETLSchedulerPool extends SchedulerPool{
 	 */
 	public static final String gracefulStopAllETLs(){
 		Flow flow=null;
-		Collection<ETLFuture> etlFutures=etlFutureDict.values();
-		for(ETLFuture etlFuture:etlFutures){
+		ETLFuture etlFuture=null;
+		Enumeration<String> keys=etlFutureDict.keys();
+		while(keys.hasMoreElements()) {
+			etlFuture=etlFutureDict.remove(keys.nextElement());
 			if(null==etlFuture) continue;
 			
 			flow=etlFuture.flow;
@@ -166,7 +176,11 @@ public class ETLSchedulerPool extends SchedulerPool{
 		}
 		
 		Context.etlSchedulerStart=false;
-		etlScheduerFuture.cancel(true);
+		try{
+			if(null!=etlScheduerFuture) etlScheduerFuture.cancel(true);
+		}catch(Exception e) {
+			log.error("cancel etlScheduerFuture occur error:",e);
+		}
 		
 		log.info("stop etl flows complete...");
 		return "stop etl flows complete...";
@@ -196,7 +210,7 @@ public class ETLSchedulerPool extends SchedulerPool{
 	public static final Boolean stopETLScheduler(){
 		Context.etlSchedulerStart=false;
 		try{
-			etlScheduerFuture.cancel(true);
+			if(null!=etlScheduerFuture) etlScheduerFuture.cancel(true);
 			return true;
 		}catch(Exception e){
 			log.error("cancel etlScheduerFuture occur error:",e);

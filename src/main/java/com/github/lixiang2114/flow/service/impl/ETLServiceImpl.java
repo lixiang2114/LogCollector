@@ -31,6 +31,11 @@ public class ETLServiceImpl extends BaseService implements ETLService{
 	
 	@Override
 	public String startETLProcess(String flowName) throws Exception {
+		if(ETLSchedulerPool.isRunning(flowName)) {
+			log.info("ETL flow: {} is running,no need to start...",flowName);
+			return "ETL flow: "+flowName+" is running,no need to start...";
+		}
+		
 		ETLFuture etlFuture=new ETLFuture(Context.getFlow(flowName));
 		ThreadPoolTaskExecutor taskExecutor=SchedulerPool.getTaskExecutor();
 		
@@ -42,7 +47,7 @@ public class ETLServiceImpl extends BaseService implements ETLService{
 		ETLSchedulerPool.addETLFuture(flowName, etlFuture);
 		ETLSchedulerPool.startETLScheduler();
 		
-		log.warn("ETL flow: {} is already started...",flowName);
+		log.info("ETL flow: {} is already started...",flowName);
 		return "ETL flow: "+flowName+" is already started...";
 	}
 	
@@ -58,7 +63,9 @@ public class ETLServiceImpl extends BaseService implements ETLService{
 		ETLFuture etlFuture=null;
 		String flowName=null;
 		
-		for(Flow flow:flows){
+		for(Flow flow:flows) {
+			if(ETLSchedulerPool.isRunning(flowName=flow.compName)) continue;
+			
 			etlFuture=new ETLFuture(flow);
 			
 			startSink(etlFuture,taskExecutor);
@@ -66,7 +73,6 @@ public class ETLServiceImpl extends BaseService implements ETLService{
 			startSource(etlFuture,taskExecutor);
 			
 			etlFuture.isStarted=true;
-			flowName=etlFuture.flow.compName;
 			ETLSchedulerPool.addETLFuture(flowName, etlFuture);
 			
 			log.info("ETL flow: {} is already started...",flowName);

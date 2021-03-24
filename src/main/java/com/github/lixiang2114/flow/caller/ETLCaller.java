@@ -24,7 +24,7 @@ public class ETLCaller implements Callable<Object>{
 	/**
 	 * 日志工具
 	 */
-	private static final Logger log=LoggerFactory.getLogger(ETLSchedulerPool.class);
+	private static final Logger log=LoggerFactory.getLogger(ETLCaller.class);
 	
 	public ETLCaller(Collection<ETLFuture> etlFutures){
 		ETLCaller.etlFutures=etlFutures;
@@ -35,7 +35,7 @@ public class ETLCaller implements Callable<Object>{
 		Flow flow=null;
 		while(Context.etlSchedulerStart) {
 			Thread.sleep(Context.etlSchedulerInterval);
-			for(ETLFuture etlFuture:etlFutures){
+			for(ETLFuture etlFuture:etlFutures) {
 				if(null==etlFuture || !etlFuture.isStarted || !etlFuture.isDone()) continue;
 				
 				flow=etlFuture.flow;
@@ -45,17 +45,18 @@ public class ETLCaller implements Callable<Object>{
 				flow.filterStart=false;
 				flow.sinkStart=false;
 				
-				etlFuture.sourceFuture.cancel(true);
-				etlFuture.filterFuture.cancel(true);
-				etlFuture.sinkFuture.cancel(true);
+				if(null!=etlFuture.sourceFuture) etlFuture.sourceFuture.cancel(true);
+				if(null!=etlFuture.filterFuture) etlFuture.filterFuture.cancel(true);
+				if(null!=etlFuture.sinkFuture) etlFuture.sinkFuture.cancel(true);
 				
 				try {
-					flow.source.callFace("checkPoint",new Object[]{null});
+					if(null!=flow.source) flow.source.callFace("checkPoint",new Object[]{null});
 				} catch (Exception e) {
 					log.error("flow: "+flow.compName+" plugin: "+flow.source.compName+" refresh checkpoint error...",e);
 				}
 				
 				etlFuture.isStarted=false;
+				ETLSchedulerPool.removeETLFuture(flow.compName);
 			}
 		}
 		return false;

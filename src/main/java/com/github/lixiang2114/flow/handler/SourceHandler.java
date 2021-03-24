@@ -28,7 +28,7 @@ public class SourceHandler implements Callable<Object>{
 
 	@Override
 	public Object call() throws Exception {
-		log.warn("call source plugin face,pluginName:{},bootClass:...",flow.source.compName,flow.source.bootClass.getName());
+		log.info("call source plugin face,pluginName:{},bootClass:...",flow.source.compName,flow.source.bootClass.getName());
 		if(null==flow.source) return null;
 		try {
 			Boolean flag=(Boolean)flow.source.callFace("start",flow);
@@ -38,10 +38,10 @@ public class SourceHandler implements Callable<Object>{
 			}
 			
 			if(!flow.realTime) {
-				log.warn("call manual plugin face from: {}...",flow.source.compName);
+				log.info("call manual plugin face from: {}...",flow.source.compName);
 				return flow.source.callFace("handle",flow.sourceToFilterChannel);
 			}else{
-				log.warn("call realtime plugin face from: {}...",flow.source.compName);
+				log.info("call realtime plugin face from: {}...",flow.source.compName);
 				return flow.source.callFace("handle",flow.transferToSourceChannel,flow.sourceToFilterChannel);
 			}
 		} catch (Exception e) {
